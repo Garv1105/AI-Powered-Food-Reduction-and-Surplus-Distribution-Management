@@ -90,12 +90,12 @@ function Toggle({
     >
       <span>{label}</span>
       <span className={clsx(
-        'w-9 h-5 rounded-full relative transition-colors',
+        'w-9 h-5 rounded-full relative transition-colors overflow-hidden',
         value === 1 ? 'bg-teal-500' : 'bg-slate-300'
       )}>
         <span className={clsx(
-          'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
-          value === 1 ? 'translate-x-4' : 'translate-x-0.5'
+          'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all',
+          value === 1 ? 'left-4' : 'left-0.5'
         )} />
       </span>
     </button>
