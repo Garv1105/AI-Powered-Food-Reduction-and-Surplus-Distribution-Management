@@ -5,7 +5,7 @@ import datetime
 import os
 from dotenv import load_dotenv
 
-from app.routers import forecast, surplus, match, route, dashboard
+from app.routers import forecast, surplus, match, route, dashboard, anumaan
 
 load_dotenv()
 
@@ -24,6 +24,7 @@ app.include_router(surplus.router)
 app.include_router(match.router)
 app.include_router(route.router)
 app.include_router(dashboard.router)
+app.include_router(anumaan.router)
 
 @app.on_event("startup")
 def on_startup():

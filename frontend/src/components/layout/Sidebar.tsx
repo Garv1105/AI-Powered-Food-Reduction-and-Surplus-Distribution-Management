@@ -2,17 +2,36 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [backendOk, setBackendOk] = useState<boolean | null>(null);
+
+  // Live /health ping — confirmed to exist at main.py line 33
+  useEffect(() => {
+    async function ping() {
+      try {
+        const res = await fetch('http://localhost:8000/health', { cache: 'no-store' });
+        const data = await res.json();
+        setBackendOk(res.ok && data.status === 'ok');
+      } catch {
+        setBackendOk(false);
+      }
+    }
+    ping();
+    const id = setInterval(ping, 15_000);
+    return () => clearInterval(id);
+  }, []);
 
   const links = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/surplus', label: 'Surplus & Matching', icon: AlertTriangle },
-    { href: '/map', label: 'Map / Routing', icon: MapIcon },
-    { href: '/reports', label: 'Reports', icon: BarChart2 },
+    { href: '/dashboard', label: 'Dashboard',         icon: LayoutDashboard },
+    { href: '/anumaan',   label: 'Anumaan',            icon: BrainCircuit    },
+    { href: '/surplus',   label: 'Surplus & Matching', icon: AlertTriangle   },
+    { href: '/map',       label: 'Map / Routing',      icon: MapIcon         },
+    { href: '/reports',   label: 'Reports',            icon: BarChart2       },
   ];
 
   return (
@@ -46,8 +65,16 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-6 flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-        <span className="text-sm text-slate-400">Demo Mode</span>
+        {backendOk === null ? (
+          <div className="w-2 h-2 rounded-full bg-slate-500 animate-pulse" />
+        ) : backendOk ? (
+          <div className="w-2 h-2 rounded-full bg-green-400" />
+        ) : (
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+        )}
+        <span className="text-sm text-slate-400">
+          {backendOk === null ? 'Checking…' : backendOk ? 'Backend connected' : 'Backend offline'}
+        </span>
       </div>
     </aside>
   );

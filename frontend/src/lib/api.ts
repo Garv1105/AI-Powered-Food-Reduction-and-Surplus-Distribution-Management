@@ -76,6 +76,38 @@ export interface DashboardSummary {
   weekly_trend: DailyStat[];
 }
 
+// ---------------------------------------------------------------------------
+// Anumaan — Demand Prediction
+// ---------------------------------------------------------------------------
+
+/** Frontend form state — camelCase */
+export interface PredictDemandRequest {
+  locationId: string;       // → location_id
+  date: string;             // → date  (same)
+  isHoliday: number;        // → is_holiday
+  tempCelsius: number;      // → temp_celsius
+  rainMm: number;           // → rain_mm
+  localEvent: number;       // → local_event
+  activePromotion: number;  // → active_promotion
+  competitorPromo: number;  // → competitor_promo
+  cpiIndex: number;         // → cpi_index
+  onlineRating: number;     // → online_rating
+  reservations: number;     // → reservations  (same)
+  demandYesterday: number;  // → demand_yesterday
+  demand7DaysAgo: number;   // → demand_7_days_ago
+  demandMa7: number;        // → demand_ma7
+}
+
+/** Backend response — mirrors PredictDemandResponse Pydantic schema */
+export interface PredictDemandResponse {
+  predicted_customers: number;
+  recommended_production: number | null;  // stub — always null for now
+  expected_surplus: number | null;         // stub — always null for now
+  location_id: string;
+  date: string;
+  derived_features: Record<string, number>;
+}
+
 const BASE_URL = 'http://localhost:8000';
 
 async function fetchWithCheck(url: string, options?: RequestInit) {
@@ -122,4 +154,48 @@ export const api = {
   getDashboardSummary: (): Promise<DashboardSummary> => {
     return fetchWithCheck(`${BASE_URL}/dashboard/summary`);
   },
+
+  /**
+   * POST /anumaan/predict-demand
+   *
+   * Explicit camelCase → snake_case mapping (matches PredictDemandRequest Pydantic schema exactly):
+   *   locationId       → location_id
+   *   date             → date
+   *   isHoliday        → is_holiday
+   *   tempCelsius      → temp_celsius
+   *   rainMm           → rain_mm
+   *   localEvent       → local_event
+   *   activePromotion  → active_promotion
+   *   competitorPromo  → competitor_promo
+   *   cpiIndex         → cpi_index
+   *   onlineRating     → online_rating
+   *   reservations     → reservations
+   *   demandYesterday  → demand_yesterday
+   *   demand7DaysAgo   → demand_7_days_ago
+   *   demandMa7        → demand_ma7
+   */
+  predictDemand: (req: PredictDemandRequest): Promise<PredictDemandResponse> => {
+    const body = {
+      location_id:       req.locationId,
+      date:              req.date,
+      is_holiday:        req.isHoliday,
+      temp_celsius:      req.tempCelsius,
+      rain_mm:           req.rainMm,
+      local_event:       req.localEvent,
+      active_promotion:  req.activePromotion,
+      competitor_promo:  req.competitorPromo,
+      cpi_index:         req.cpiIndex,
+      online_rating:     req.onlineRating,
+      reservations:      req.reservations,
+      demand_yesterday:  req.demandYesterday,
+      demand_7_days_ago: req.demand7DaysAgo,
+      demand_ma7:        req.demandMa7,
+    };
+    return fetchWithCheck(`${BASE_URL}/anumaan/predict-demand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  },
 };
+
