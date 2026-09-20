@@ -14,7 +14,7 @@ export default function Sidebar() {
   useEffect(() => {
     async function ping() {
       try {
-        const res = await fetch('http://localhost:8000/health', { cache: 'no-store' });
+        const res = await fetch('http://127.0.0.1:8000/health', { cache: 'no-store' });
         const data = await res.json();
         setBackendOk(res.ok && data.status === 'ok');
       } catch {

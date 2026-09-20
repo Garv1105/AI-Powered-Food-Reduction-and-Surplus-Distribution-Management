@@ -105,7 +105,7 @@ export interface PredictDemandResponse {
   derived_features: Record<string, number>;
 }
 
-const BASE_URL = 'http://localhost:8002';
+const BASE_URL = 'http://127.0.0.1:8000';
 
 async function fetchWithCheck(url: string, options?: RequestInit) {
   const response = await fetch(url, options);
