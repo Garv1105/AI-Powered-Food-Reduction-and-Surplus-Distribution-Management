@@ -13,3 +13,17 @@ class ConsumptionLog(Base):
     quantity_kg = Column(Float)
     headcount = Column(Integer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class ConsumptionHistory(Base):
+    """
+    Dedicated table to store historical daily customer counts for specific locations.
+    Used exclusively for deriving lag features (demand_yesterday, etc.) for Anumaan.
+    """
+    __tablename__ = "consumption_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    location_id = Column(String(50), nullable=False, index=True)
+    date = Column(Date, nullable=False, index=True)
+    customer_count = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+

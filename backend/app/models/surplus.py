@@ -10,6 +10,7 @@ class SurplusEvent(Base):
     category_id = Column(Integer, ForeignKey("food_categories.id"))
     quantity_kg = Column(Float)
     detected_at = Column(DateTime(timezone=True), server_default=func.now())
+    batch_created_at = Column(DateTime(timezone=True))
     expiry_at = Column(DateTime(timezone=True))
     urgency_level = Column(String(10))
     status = Column(String(20))

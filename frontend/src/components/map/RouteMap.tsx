@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { RouteResponse, NGOMatch } from '@/lib/api';
 
 interface RouteMapProps {
-  route: RouteResponse;
+  route: RouteResponse | null;
   ngos: NGOMatch[];
 }
 
@@ -76,7 +76,43 @@ export default function RouteMap({ route, ngos }: RouteMapProps) {
       });
 
       // Route Polyline
-      if (route.route_polyline && route.route_polyline.length > 0) {
+      if (route && route.route_geometry) {
+        m.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: route.route_geometry,
+          },
+        });
+
+        m.addLayer({
+          id: 'route-line',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#0d9488',
+            'line-width': 4,
+            'line-dasharray': [2, 2],
+          },
+        });
+        
+        const coords = route.route_geometry.coordinates;
+        if (coords && coords.length > 0) {
+          const bounds = new maplibregl.LngLatBounds(
+            coords[0] as [number, number],
+            coords[coords.length - 1] as [number, number]
+          );
+          for (const c of coords) {
+            bounds.extend(c as [number, number]);
+          }
+          m.fitBounds(bounds, { padding: 50 });
+        }
+      } else if (route && route.route_polyline && route.route_polyline.length > 0) {
         // MapLibre uses [lng, lat] while common polylines might be [lat, lng]. Assuming [lng, lat] from backend for MapLibre or converting if needed.
         // If backend sends [lat, lng], we need to map to [lng, lat]. Let's assume the backend provides [lat, lng] as typical for routing, so we reverse it.
         const coordinates = route.route_polyline.map(coord => [coord[1], coord[0]]);

@@ -48,7 +48,7 @@ export default function ReportsPage() {
             <Leaf size={18} className="text-green-600" />
             <h3 className="text-sm font-semibold text-slate-500">Rescued (Week)</h3>
           </div>
-          <p className="text-3xl font-bold text-navy">{weeklyRescued} <span className="text-lg font-medium text-slate-500">kg</span></p>
+          <p className="text-3xl font-bold text-navy">{weeklyRescued.toFixed(1)} <span className="text-lg font-medium text-slate-500">kg</span></p>
         </div>
         
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
@@ -56,7 +56,7 @@ export default function ReportsPage() {
             <Cloud size={18} className="text-teal" />
             <h3 className="text-sm font-semibold text-slate-500">CO₂ Saved</h3>
           </div>
-          <p className="text-3xl font-bold text-navy">{weeklyCo2} <span className="text-lg font-medium text-slate-500">kg</span></p>
+          <p className="text-3xl font-bold text-navy">{weeklyCo2.toFixed(1)} <span className="text-lg font-medium text-slate-500">kg</span></p>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
@@ -84,7 +84,7 @@ export default function ReportsPage() {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `${v}kg`} />
-              <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+              <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number) => value.toFixed(1)} />
               <Legend iconType="circle" />
               <Bar dataKey="kg_rescued" name="Rescued (kg)" fill="#0d9488" radius={[4, 4, 0, 0]} barSize={32} />
               <Bar dataKey="kg_wasted" name="Wasted (kg)" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={32} />
@@ -117,10 +117,10 @@ export default function ReportsPage() {
                 return (
                   <tr key={stat.date} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
                     <td className="px-6 py-4 font-medium text-navy">{stat.date}</td>
-                    <td className="px-6 py-4 text-green-600 font-medium">{stat.kg_rescued}</td>
-                    <td className="px-6 py-4 text-red-500">{stat.kg_wasted}</td>
+                    <td className="px-6 py-4 text-green-600 font-medium">{stat.kg_rescued.toFixed(1)}</td>
+                    <td className="px-6 py-4 text-red-500">{stat.kg_wasted.toFixed(1)}</td>
                     <td className="px-6 py-4 text-slate-700">{stat.meals_served}</td>
-                    <td className="px-6 py-4 text-slate-700">{stat.co2_saved_kg}</td>
+                    <td className="px-6 py-4 text-slate-700">{stat.co2_saved_kg.toFixed(1)}</td>
                     <td className="px-6 py-4 font-medium text-navy">{rate}%</td>
                   </tr>
                 );
@@ -131,7 +131,7 @@ export default function ReportsPage() {
       </div>
 
       <p className="text-xs text-slate-500 text-center pb-8">
-        * CO₂ factor: 1 kg food rescued = 2.5 kg CO₂ equivalent saved. Cost estimate: ₹50/kg.
+        * CO₂ factor: 1 kg food rescued = 2.5 kg CO₂ equivalent saved. Cost estimate: ₹150/kg.
       </p>
     </div>
   );

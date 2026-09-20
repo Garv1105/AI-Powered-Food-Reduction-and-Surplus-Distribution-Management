@@ -19,15 +19,12 @@ export default function MapPage() {
   const [ngos, setNgos] = useState<NGOMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [optimizing, setOptimizing] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [routeData, ngoData] = await Promise.all([
-          api.getRoute(1),
-          api.getMatches(1)
-        ]);
-        setRoute(routeData);
+        const ngoData = await api.getMatches(1);
         setNgos(ngoData);
       } catch (err: any) {
         setError(err.message);
@@ -37,6 +34,20 @@ export default function MapPage() {
     }
     loadData();
   }, []);
+
+  const handleOptimize = async () => {
+    try {
+      setOptimizing(true);
+      setError(null);
+      // We pass the single mock delivery ID 1 as discovered in DB
+      const routeData = await api.optimizeRoute(1, [1]);
+      setRoute(routeData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setOptimizing(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-8">Loading map data...</div>;
@@ -52,38 +63,49 @@ export default function MapPage() {
     );
   }
 
-  if (!route) return null;
-
   return (
     <div className="flex flex-col h-screen w-full relative">
       <div className="p-6 pb-4 shrink-0 bg-white border-b border-slate-200 z-10 shadow-sm relative">
-        <h1 className="text-2xl font-bold text-navy mb-4">Map / Routing</h1>
-        
-        <div className="flex gap-6">
-          <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
-            <Navigation2 className="text-teal" size={20} />
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Total Distance</p>
-              <p className="font-bold text-navy">{route.total_distance_km} km</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
-            <Clock className="text-amber-600" size={20} />
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Est. Time</p>
-              <p className="font-bold text-navy">{route.eta_minutes} mins</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
-            <MapPin className="text-navy" size={20} />
-            <div>
-              <p className="text-xs text-slate-500 font-medium">Waypoints</p>
-              <p className="font-bold text-navy">{route.waypoints.length} stops</p>
-            </div>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-navy">Map / Routing</h1>
+          <button
+            onClick={handleOptimize}
+            disabled={optimizing}
+            className="bg-teal text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-teal/90 disabled:opacity-50"
+          >
+            {optimizing ? 'Optimizing...' : 'Optimize Route'}
+          </button>
         </div>
+        
+        {route ? (
+          <div className="flex gap-6">
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+              <Navigation2 className="text-teal" size={20} />
+              <div>
+                <p className="text-xs text-slate-500 font-medium">Total Distance</p>
+                <p className="font-bold text-navy">{route.total_distance_km} km</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+              <Clock className="text-amber-600" size={20} />
+              <div>
+                <p className="text-xs text-slate-500 font-medium">Est. Time</p>
+                <p className="font-bold text-navy">{route.eta_minutes} mins</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+              <MapPin className="text-navy" size={20} />
+              <div>
+                <p className="text-xs text-slate-500 font-medium">Waypoints</p>
+                <p className="font-bold text-navy">{route.waypoints.length} stops</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-slate-500 text-sm">Click "Optimize Route" to generate an optimized delivery plan using OR-Tools VRPTW.</p>
+        )}
       </div>
 
       <div className="flex-1 w-full relative z-0" style={{ height: 'calc(100vh - 140px)' }}>

@@ -38,20 +38,20 @@ export default function NGOMatchList({ matches, surplusEvent, isLoading }: NGOMa
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {matches.length === 0 ? (
           <div className="text-center py-10 bg-white rounded-xl border border-slate-200">
-            <p className="text-slate-500">No suitable NGOs found for this surplus.</p>
+            <p className="text-slate-500">No eligible NGOs found (Capacity, distance, or operating hours constraints not met).</p>
           </div>
         ) : (
           matches.map((match) => {
             const scoreColor = 
-              match.match_score >= 0.8 ? 'bg-green-500' :
-              match.match_score >= 0.6 ? 'bg-amber-500' : 'bg-red-500';
+              match.match_score >= 80 ? 'bg-green-500' :
+              match.match_score >= 60 ? 'bg-amber-500' : 'bg-red-500';
 
             return (
               <div key={match.ngo_id} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-bold text-navy text-lg">{match.name}</h3>
-                    <p className="text-sm text-slate-500 mt-0.5">{match.address}</p>
+                    <h3 className="font-bold text-navy text-lg">{match.ngo_name}</h3>
+                    <p className="text-sm text-slate-500 mt-0.5">{match.contact_name} ({match.contact_phone})</p>
                   </div>
                   <div className="w-16 h-16 relative flex items-center justify-center">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
@@ -65,25 +65,22 @@ export default function NGOMatchList({ matches, surplusEvent, isLoading }: NGOMa
                       <path
                         className={scoreColor.replace('bg-', 'text-')}
                         strokeWidth="3"
-                        strokeDasharray={`${match.match_score * 100}, 100`}
+                        strokeDasharray={`${match.match_score}, 100`}
                         stroke="currentColor"
                         fill="none"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                     </svg>
                     <span className="absolute text-xs font-bold text-navy">
-                      {Math.round(match.match_score * 100)}%
+                      {Math.round(match.match_score)}%
                     </span>
                   </div>
                 </div>
 
                 <div className="flex gap-2 mb-4 flex-wrap">
-                  <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 capitalize">
-                    {match.food_preference} Pref
-                  </span>
                   <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 flex items-center gap-1">
-                    <Scale size={12} />
-                    {match.capacity_kg}kg Capacity
+                    <Clock size={12} />
+                    {match.eta_minutes} min ETA
                   </span>
                   <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 flex items-center gap-1">
                     <MapPin size={12} />
@@ -92,30 +89,14 @@ export default function NGOMatchList({ matches, surplusEvent, isLoading }: NGOMa
                 </div>
 
                 <div className="space-y-2 mb-5">
-                  <div className="flex items-center gap-2 text-sm">
-                    {match.capacity_match ? (
-                      <CheckCircle2 size={16} className="text-green-500" />
-                    ) : (
-                      <XCircle size={16} className="text-red-500" />
-                    )}
-                    <span className={match.capacity_match ? 'text-slate-700' : 'text-slate-500 line-through'}>
-                      Capacity Match
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    {match.food_pref_match ? (
-                      <CheckCircle2 size={16} className="text-green-500" />
-                    ) : (
-                      <XCircle size={16} className="text-red-500" />
-                    )}
-                    <span className={match.food_pref_match ? 'text-slate-700' : 'text-slate-500'}>
-                      Food Preference Match
-                    </span>
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <CheckCircle2 size={16} className="text-green-500" />
+                    <span>{match.match_reason}</span>
                   </div>
                 </div>
 
                 <button 
-                  onClick={() => alert(`Delivery assigned to ${match.name} (stub)!`)}
+                  onClick={() => alert(`Delivery assigned to ${match.ngo_name} (stub)!`)}
                   className="w-full bg-teal hover:bg-teal-dark text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
                 >
                   Assign Delivery

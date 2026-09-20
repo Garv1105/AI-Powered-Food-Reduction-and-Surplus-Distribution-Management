@@ -29,17 +29,13 @@ export interface SurplusEvent {
 
 export interface NGOMatch {
   ngo_id: number;
-  name: string;
-  address: string;
+  ngo_name: string;
   contact_name: string;
-  food_preference: string;
-  capacity_kg: number;
-  distance_km: number;
+  contact_phone: string;
   match_score: number;
-  capacity_match: boolean;
-  food_pref_match: boolean;
-  lat: number;
-  lng: number;
+  distance_km: number;
+  eta_minutes: number;
+  match_reason: string;
 }
 
 export interface Waypoint {
@@ -50,11 +46,12 @@ export interface Waypoint {
 }
 
 export interface RouteResponse {
-  delivery_id: number;
+  delivery_id?: number;
   waypoints: Waypoint[];
   total_distance_km: number;
   eta_minutes: number;
   route_polyline: number[][];
+  route_geometry?: any;
 }
 
 export interface DailyStat {
@@ -108,7 +105,7 @@ export interface PredictDemandResponse {
   derived_features: Record<string, number>;
 }
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8002';
 
 async function fetchWithCheck(url: string, options?: RequestInit) {
   const response = await fetch(url, options);
@@ -119,12 +116,44 @@ async function fetchWithCheck(url: string, options?: RequestInit) {
 }
 
 export const api = {
-  getForecast: (category?: string, daysAhead?: number): Promise<ForecastResponse> => {
-    const params = new URLSearchParams();
-    if (category) params.append('category', category);
-    if (daysAhead) params.append('days_ahead', daysAhead.toString());
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return fetchWithCheck(`${BASE_URL}/forecast${query}`);
+  getForecast: async (kitchenId: string, startDate: string, daysAhead: number = 7): Promise<ForecastResponse> => {
+    // Generate dates
+    const dates: string[] = [];
+    const start = new Date(startDate);
+    for (let i = 0; i < daysAhead; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+
+    // Fetch predictions in parallel
+    const promises = dates.map(date => {
+      const params = new URLSearchParams({ kitchen_id: kitchenId, date: date });
+      return fetchWithCheck(`${BASE_URL}/anumaan/forecast?${params.toString()}`);
+    });
+
+    const responses: PredictDemandResponse[] = await Promise.all(promises);
+
+    // Map to old expected format for the chart
+    const predictions: ForecastPoint[] = responses.map(res => {
+      return {
+        date: res.date,
+        // The chart expects kg, we are returning customers. 
+        // For demo purposes, let's just map customers to kg (e.g. 1 customer = 0.5kg) or just pass it as is.
+        // Let's pass it as is and the chart can just show the raw number.
+        predicted_kg: res.predicted_customers,
+        confidence_lower: res.predicted_customers * 0.9,
+        confidence_upper: res.predicted_customers * 1.1
+      };
+    });
+
+    return {
+      kitchen_id: 1,
+      category: 'Overall Demand (Customers)',
+      unit: 'customers',
+      generated_at: new Date().toISOString(),
+      predictions: predictions
+    };
   },
 
   getSurplus: (status?: string): Promise<SurplusEvent[]> => {
@@ -135,12 +164,14 @@ export const api = {
   },
 
   getMatches: (surplusEventId: number): Promise<NGOMatch[]> => {
-    return fetchWithCheck(`${BASE_URL}/match`, {
+    return fetchWithCheck(`${BASE_URL}/surplus/${surplusEventId}/matches`);
+  },
+  
+  optimizeRoute: (kitchenId: number, deliveryIds: number[]): Promise<RouteResponse> => {
+    return fetchWithCheck(`${BASE_URL}/route/optimize`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ surplus_event_id: surplusEventId }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kitchen_id: kitchenId, delivery_ids: deliveryIds }),
     });
   },
 
@@ -153,6 +184,18 @@ export const api = {
 
   getDashboardSummary: (): Promise<DashboardSummary> => {
     return fetchWithCheck(`${BASE_URL}/dashboard/summary`);
+  },
+
+  getProductionPlan: (kitchenId: string, date: string): Promise<any> => {
+    return fetchWithCheck(`${BASE_URL}/production-plan/generate?kitchen_id=${kitchenId}&date=${date}`);
+  },
+
+  saveProductionPlan: (plan: any): Promise<any> => {
+    return fetchWithCheck(`${BASE_URL}/production-plan/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(plan),
+    });
   },
 
   /**

@@ -9,18 +9,24 @@ import { Leaf, Trash2, AlertCircle, Cloud } from 'lucide-react';
 export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
+  const [productionPlan, setProductionPlan] = useState<any>(null);
+  const [surplusEvents, setSurplusEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [sumData, foreData] = await Promise.all([
+        const [sumData, foreData, planData, surplusData] = await Promise.all([
           api.getDashboardSummary(),
-          api.getForecast('rice', 7) // Using 'rice' and 7 days as default
+          api.getForecast('K1_MainCampus', '2026-09-25', 7),
+          api.getProductionPlan('K1_MainCampus', '2026-09-25'),
+          api.getSurplus('active')
         ]);
         setSummary(sumData);
         setForecast(foreData);
+        setProductionPlan(planData);
+        setSurplusEvents(surplusData);
       } catch (err: any) {
         setError(err.message || 'Failed to load dashboard data');
       } finally {
@@ -29,6 +35,15 @@ export default function DashboardPage() {
     }
     loadData();
   }, []);
+
+  const handleConfirmPlan = async () => {
+    try {
+      await api.saveProductionPlan(productionPlan);
+      alert('Production plan saved successfully!');
+    } catch (err: any) {
+      alert('Error saving plan: ' + err.message);
+    }
+  };
 
   if (loading) {
     return (
@@ -110,12 +125,52 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <ForecastChart data={forecast.predictions} category={forecast.category} />
+        <div className="col-span-2 space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative group">
+            <div className="absolute top-4 right-4 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-50 p-2 rounded border border-slate-100 z-10 shadow-sm pointer-events-none w-64">
+              Forecast powered by Anumaan (XGBoost, MAE ~49 customers on held-out test data).
+            </div>
+            <ForecastChart data={forecast.predictions} category={forecast.category} />
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-navy">Today's Production Plan</h2>
+              <button 
+                onClick={handleConfirmPlan}
+                className="bg-teal hover:bg-teal-600 text-white px-4 py-2 rounded font-medium transition-colors"
+              >
+                Confirm Plan
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-slate-600">
+                  <tr>
+                    <th className="px-4 py-2">Category</th>
+                    <th className="px-4 py-2">Forecast</th>
+                    <th className="px-4 py-2">Buffer</th>
+                    <th className="px-4 py-2">Recommended</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productionPlan?.categories.map((cat: any) => (
+                    <tr key={cat.category_id} className="border-b border-slate-100">
+                      <td className="px-4 py-2 font-medium capitalize">{cat.category_name}</td>
+                      <td className="px-4 py-2">{cat.predicted_qty} {cat.unit}</td>
+                      <td className="px-4 py-2 text-slate-500" title={cat.buffer_reasoning}>
+                        {(cat.buffer_pct * 100).toFixed(1)}%
+                      </td>
+                      <td className="px-4 py-2 font-bold text-navy">{cat.recommended_production_qty} {cat.unit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
         <div className="col-span-1">
-          {/* We will fetch surplus events here or pass empty array for now and let the component handle its own fetch or just fetch it in dashboard */}
-          <SurplusAlertList events={[]} />
+          <SurplusAlertList events={surplusEvents} />
         </div>
       </div>
     </div>

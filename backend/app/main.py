@@ -5,7 +5,7 @@ import datetime
 import os
 from dotenv import load_dotenv
 
-from app.routers import forecast, surplus, match, route, dashboard, anumaan
+from app.routers import surplus, match, route, dashboard, anumaan, production
 
 load_dotenv()
 
@@ -13,22 +13,29 @@ app = FastAPI(title="Food Waste Reduction API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(forecast.router)
-app.include_router(surplus.router)
-app.include_router(match.router)
-app.include_router(route.router)
-app.include_router(dashboard.router)
-app.include_router(anumaan.router)
+app.include_router(anumaan.router, tags=["Anumaan"])
+app.include_router(surplus.router, tags=["Surplus"])
+app.include_router(match.router, tags=["Matching"])
+app.include_router(route.router, tags=["Routing"])
+app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(production.router, tags=["Production"])
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+    from app.services.matching_context import seed_ngos
+    from app.database import SessionLocal
+    db = SessionLocal()
+    try:
+        seed_ngos(db)
+    finally:
+        db.close()
 
 @app.get("/health")
 def health_check():
