@@ -213,17 +213,4 @@ The raw `restaurant_demand_28k.csv` dataset ends in December 2025. Because demos
 | Map tiles | OpenStreetMap (no API key required) |
 
 ---
-
-## 7. Color Scheme Reference
-
-| Token | Hex | Usage |
-|---|---|---|
-| Navy | `#0f172a` | Sidebar background |
-| Navy 800 | `#1e293b` | Sidebar hover |
-| Teal | `#0d9488` | Primary accent, CTAs |
-| Teal light | `#14b8a6` | Chart lines, badges |
-| Slate 50 | `#f8fafc` | Content background |
-
----
-
 *Built for Smart India Hackathon 2026 · Problem Statement SIH26234*
