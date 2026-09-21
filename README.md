@@ -1,4 +1,4 @@
-# 🌱 FoodSaver AI — SIH 2026 Prototype
+# FoodSaver AI- SIH 2026 Prototype
 
 **Problem Statement:** SIH26234 — AI-powered food waste reduction and redistribution platform for institutional kitchens and food processing units.
 
