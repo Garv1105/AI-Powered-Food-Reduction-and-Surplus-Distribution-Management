@@ -108,9 +108,13 @@ export interface PredictDemandResponse {
   derived_features: Record<string, number>;
 }
 
+<<<<<<< HEAD
 // ---------------------------------------------------------------------------
 // Processing Unit
 // ---------------------------------------------------------------------------
+=======
+const BASE_URL = 'http://127.0.0.1:8000';
+>>>>>>> 20f2123e133b1ee10969c77e4948b99ac6f38c59
 
 export interface ProcessingUnitTrendPoint {
   date: string;

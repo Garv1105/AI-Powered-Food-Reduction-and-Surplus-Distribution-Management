@@ -20,3 +20,48 @@ html {
   background-color: #0d9488;
   border-radius: 20px;
 }
+
+/* ── Anumaan page ────────────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; }
+
+/* hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] { -moz-appearance: textfield; }
+
+/* focus ring for Anumaan inputs */
+.anumaan-grid input:focus,
+.anumaan-grid select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(194, 68, 14, 0.25);
+}
+
+/* result fade-up */
+@keyframes anumaan-fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anumaan-result-enter {
+  animation: anumaan-fadeUp 350ms ease forwards;
+}
+
+/* responsive stacking */
+@media (max-width: 1023px) {
+  .anumaan-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .anumaan-kds {
+    position: static !important;
+    min-height: auto !important;
+    border-top: 1px solid #E8E0D0;
+  }
+}
+@media (max-width: 767px) {
+  .anumaan-kds {
+    padding: 28px 20px !important;
+  }
+}
