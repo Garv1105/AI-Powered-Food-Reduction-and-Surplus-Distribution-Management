@@ -63,6 +63,14 @@ export default function SurplusPage() {
     }
   };
 
+  const formatTime = (decimalHours: number) => {
+    if (decimalHours <= 0) return '0m';
+    const h = Math.floor(decimalHours);
+    const m = Math.round((decimalHours - h) * 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+
   return (
     <div className="p-8 h-screen flex flex-col">
       <div className="mb-6 shrink-0">
@@ -128,15 +136,17 @@ export default function SurplusPage() {
                         <span className={clsx('text-xs font-semibold px-2 py-1 rounded-md border capitalize', getUrgencyBadge(event.urgency_level))}>
                           {event.urgency_level}
                         </span>
-                        <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 capitalize">
-                          {event.status}
-                        </span>
+                        {event.urgency_level.toUpperCase() !== 'EXPIRED' && (
+                          <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 capitalize">
+                            {event.status}
+                          </span>
+                        )}
                       </div>
                       
                       <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
                         <Clock size={14} className={event.rescue_window_hours < 2 ? 'text-red-500' : 'text-slate-400'} />
                         <span className={event.rescue_window_hours < 2 ? 'text-red-600' : ''}>
-                          {event.rescue_window_hours}h left
+                          {formatTime(event.rescue_window_hours)} left
                         </span>
                       </div>
                     </div>
@@ -144,6 +154,45 @@ export default function SurplusPage() {
                 );
               })
             )}
+          </div>
+
+          {/* Manual Entry Form */}
+          <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl">
+            <h3 className="font-bold text-navy mb-3 text-sm">Manual Surplus Entry (Demo Control)</h3>
+            <form 
+              className="flex flex-col gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const cat = (form.elements.namedItem('category') as HTMLInputElement).value;
+                const qty = parseFloat((form.elements.namedItem('quantity') as HTMLInputElement).value);
+                const hrs = parseFloat((form.elements.namedItem('hours') as HTMLInputElement).value);
+                try {
+                  await api.createManualSurplus({
+                    kitchen_id: 1, // K1_MainCampus
+                    category_name: cat,
+                    quantity_kg: qty,
+                    hours_remaining_override: hrs
+                  });
+                  alert('Event seeded successfully!');
+                  window.location.reload();
+                } catch(err: any) {
+                  alert('Error: ' + err.message);
+                }
+              }}
+            >
+              <div className="flex gap-2">
+                <select name="category" className="flex-1 p-2 border border-slate-200 rounded text-sm" required defaultValue="Rice">
+                  <option value="Rice">Rice</option>
+                  <option value="Dal">Dal</option>
+                  <option value="Vegetable_Curry">Vegetable_Curry</option>
+                  <option value="Roti_Bread">Roti_Bread</option>
+                </select>
+                <input name="quantity" type="number" placeholder="Qty (kg)" step="0.1" required className="w-24 p-2 border border-slate-200 rounded text-sm" />
+                <input name="hours" type="number" placeholder="Hrs Left" step="0.5" required className="w-24 p-2 border border-slate-200 rounded text-sm" />
+                <button type="submit" className="bg-navy text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors">Seed</button>
+              </div>
+            </form>
           </div>
         </div>
 

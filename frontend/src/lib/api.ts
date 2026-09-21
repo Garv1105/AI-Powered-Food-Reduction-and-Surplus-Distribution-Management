@@ -36,6 +36,8 @@ export interface NGOMatch {
   distance_km: number;
   eta_minutes: number;
   match_reason: string;
+  lat: number;
+  lng: number;
 }
 
 export interface Waypoint {
@@ -52,6 +54,7 @@ export interface RouteResponse {
   eta_minutes: number;
   route_polyline: number[][];
   route_geometry?: any;
+  routing_method_used?: string;
 }
 
 export interface DailyStat {
@@ -105,10 +108,141 @@ export interface PredictDemandResponse {
   derived_features: Record<string, number>;
 }
 
-const BASE_URL = 'http://localhost:8002';
+// ---------------------------------------------------------------------------
+// Processing Unit
+// ---------------------------------------------------------------------------
 
-async function fetchWithCheck(url: string, options?: RequestInit) {
-  const response = await fetch(url, options);
+export interface ProcessingUnitTrendPoint {
+  date: string;
+  day_of_week: string;
+  process_yield_pct: number;
+  downtime_pct: number;
+  rejection_pct: number;
+  energy_intensity_kwh_per_kg: number;
+  net_good_output_kg: number;
+  daily_profit_inr: number;
+  root_cause: string;
+}
+
+export interface ProcessingUnitAggregates {
+  avg_process_yield_pct: number;
+  avg_downtime_pct: number;
+  avg_rejection_pct: number;
+  total_downtime_hours: number;
+  total_energy_consumed_kwh: number;
+  total_revenue_inr: number;
+  total_cost_inr: number;
+  total_profit_inr: number;
+  total_waste_loss_inr: number;
+  total_downtime_opportunity_loss_inr: number;
+  total_net_good_output_kg: number;
+  total_rejected_kg: number;
+  period_energy_intensity_kwh_per_kg: number | null;
+}
+
+export interface ProcessingUnitMetrics {
+  unit_id: number;
+  date_range: { start: string; end: string };
+  data_available: boolean;
+  days_with_data: number;
+  aggregates: ProcessingUnitAggregates | null;
+  trend: ProcessingUnitTrendPoint[];
+}
+
+export interface FailedMetric {
+  metric: string;
+  value: number;
+  threshold: string;
+  direction: string;
+}
+
+export interface FlaggedDay {
+  date: string;
+  day_of_week: string;
+  root_cause: string;
+  failed_metrics: FailedMetric[];
+  downtime_hours: number;
+  net_good_output_kg: number;
+  daily_profit_inr: number;
+}
+
+export interface FlaggedDaysResponse {
+  unit_id: number;
+  total_flagged_days: number;
+  thresholds: Record<string, string>;
+  flagged_days: FlaggedDay[];
+}
+
+// ---------------------------------------------------------------------------
+// Sustainability Report
+// ---------------------------------------------------------------------------
+
+export interface SustainabilityMetrics {
+  metadata: {
+    period_start: string;
+    period_end: string;
+    is_synthetic_data: boolean;
+    surplus_data_available: boolean;
+  };
+  surplus: {
+    total_events_detected: number;
+    kg_rescued: number | null;
+    kg_wasted_expired: number | null;
+    rescue_rate_pct: number | null;
+  };
+  impact: {
+    co2e_avoided_kg: number | null;
+    co2e_factor_source: string;
+    meals_redistributed: number | null;
+    meal_weight_assumption_kg: number;
+  };
+  top_wasted_categories: Array<{ category: string; kg_wasted: number }> | null;
+  forecast_performance: {
+    model: string;
+    mae_customers_per_day: number;
+    mape: null;
+    note: string;
+  };
+  processing_unit: {
+    unit_id: number;
+    days_in_period: number;
+    avg_process_yield_pct: number | null;
+    avg_downtime_pct: number | null;
+    data_available: boolean;
+  };
+}
+
+export interface SustainabilityReport {
+  provenance: {
+    period_start: string;
+    period_end: string;
+    sources: string[];
+    documented_assumptions: Record<string, string>;
+    is_synthetic_data: boolean;
+  };
+  metrics: SustainabilityMetrics;
+  narrative: string | null;
+  narrative_source?: string;
+  llm_error: string | null;
+}
+
+const PRIMARY_URL = 'http://127.0.0.1:8080';
+const FALLBACK_URL = 'http://127.0.0.1:8081';
+const BASE_URL = ''; // Callers prepend this, making the arg an endpoint path like '/route'
+
+async function fetchWithCheck(endpoint: string, options?: RequestInit) {
+  try {
+    const response = await fetch(`${PRIMARY_URL}${endpoint}`, options);
+    if (response.ok) return response.json();
+    if (response.status !== 404 && response.status !== 502) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+  } catch (err) {
+    // If connection refused or network error, silently fall through to try fallback
+  }
+
+  // Fallback
+  const response = await fetch(`${FALLBACK_URL}${endpoint}`, options);
   if (!response.ok) {
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
@@ -161,6 +295,14 @@ export const api = {
     if (status) params.append('status', status);
     const query = params.toString() ? `?${params.toString()}` : '';
     return fetchWithCheck(`${BASE_URL}/surplus${query}`);
+  },
+
+  createManualSurplus: (data: { kitchen_id: number; category_name: string; quantity_kg: number; hours_remaining_override?: number }) => {
+    return fetchWithCheck(`${BASE_URL}/surplus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
   },
 
   getMatches: (surplusEventId: number): Promise<NGOMatch[]> => {
@@ -240,5 +382,14 @@ export const api = {
       body: JSON.stringify(body),
     });
   },
+
+  getProcessingUnitMetrics: (unitId: number, dateRange: string): Promise<ProcessingUnitMetrics> =>
+    fetchWithCheck(`${BASE_URL}/processing-unit/${unitId}/metrics?date_range=${encodeURIComponent(dateRange)}`),
+
+  getFlaggedDays: (unitId: number): Promise<FlaggedDaysResponse> =>
+    fetchWithCheck(`${BASE_URL}/processing-unit/${unitId}/flagged-days`),
+
+  getSustainabilityReport: (dateRange: string): Promise<SustainabilityReport> =>
+    fetchWithCheck(`${BASE_URL}/reports/sustainability?date_range=${encodeURIComponent(dateRange)}`),
 };
 

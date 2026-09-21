@@ -29,6 +29,8 @@ def solve_vrptw(duration_matrix, distance_matrix, time_windows_seconds):
     )
     time_dimension = routing.GetDimensionOrDie(time)
     
+    print(f"DEBUG: num_locations={num_locations}, len(time_windows)={len(time_windows_seconds)}")
+    print(f"DEBUG: time_windows={time_windows_seconds}")
     for i in range(num_locations):
         index = manager.NodeToIndex(i)
         start, end = time_windows_seconds[i]
@@ -98,6 +100,8 @@ def optimize_route_engine(duration_matrix: List[List[float]], distance_matrix: L
             if route:
                 return route, dist, dur, "vrptw"
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             logger.error(f"VRPTW failed: {e}. Falling back to Nearest Neighbor.")
             pass
             

@@ -27,7 +27,7 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
             active_surplus += 1
             
     # Let's compute kg_rescued, etc. Just sum for today.
-    rescued_today = db.query(SurplusEvent).filter(SurplusEvent.status == 'DELIVERED', SurplusEvent.detected_at >= today).all()
+    rescued_today = db.query(SurplusEvent).filter(SurplusEvent.status.in_(['DELIVERED', 'MATCHED']), SurplusEvent.detected_at >= today).all()
     kg_rescued_today = sum(s.quantity_kg for s in rescued_today) if rescued_today else 0.0
     
     kg_wasted_today = sum(s.quantity_kg for s in db.query(SurplusEvent).filter(SurplusEvent.status == 'EXPIRED', SurplusEvent.detected_at >= today).all())
@@ -36,7 +36,7 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
     for i in range(6, -1, -1):
         d = today - datetime.timedelta(days=i)
         
-        rescued = db.query(SurplusEvent).filter(SurplusEvent.status == 'DELIVERED', SurplusEvent.detected_at >= d, SurplusEvent.detected_at < d + datetime.timedelta(days=1)).all()
+        rescued = db.query(SurplusEvent).filter(SurplusEvent.status.in_(['DELIVERED', 'MATCHED']), SurplusEvent.detected_at >= d, SurplusEvent.detected_at < d + datetime.timedelta(days=1)).all()
         kg_rescued = sum(s.quantity_kg for s in rescued) if rescued else 0.0
         
         wasted = db.query(SurplusEvent).filter(SurplusEvent.status == 'EXPIRED', SurplusEvent.detected_at >= d, SurplusEvent.detected_at < d + datetime.timedelta(days=1)).all()

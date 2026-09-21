@@ -7,4 +7,4 @@ from .ngo import NGO
 from .surplus import SurplusEvent
 from .delivery import Delivery
 from .sustainability import SustainabilityMetric
-from .processing_unit import ProcessingUnitLog
+from .processing_unit import ProcessingUnit, ProcessingUnitLog

@@ -1,138 +1,172 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, DashboardSummary } from '@/lib/api';
-import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
-import { Leaf, Cloud, Users, CheckCircle } from 'lucide-react';
+import { api } from '@/lib/api';
+import { BarChart2, Cloud, Users, CheckCircle, Leaf, AlertCircle } from 'lucide-react';
+import clsx from 'clsx';
 
 export default function ReportsPage() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [dateRange, setDateRange] = useState('30d');
+  const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [demoMode, setDemoMode] = useState(true);
 
   useEffect(() => {
-    api.getDashboardSummary()
-      .then(setSummary)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await api.getSustainabilityReport(dateRange);
+        setReport(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [dateRange]);
 
-  if (loading) {
-    return <div className="p-8">Loading reports...</div>;
-  }
-
-  if (!summary) return null;
-
-  // Calculate weekly totals
-  const weeklyRescued = summary.weekly_trend.reduce((sum, d) => sum + d.kg_rescued, 0);
-  const weeklyWasted = summary.weekly_trend.reduce((sum, d) => sum + d.kg_wasted, 0);
-  const weeklyMeals = summary.weekly_trend.reduce((sum, d) => sum + d.meals_served, 0);
-  const weeklyCo2 = summary.weekly_trend.reduce((sum, d) => sum + d.co2_saved_kg, 0);
-  const rescueRate = weeklyRescued + weeklyWasted > 0 
-    ? Math.round((weeklyRescued / (weeklyRescued + weeklyWasted)) * 100) 
-    : 0;
-
-  const dateRangeStr = summary.weekly_trend.length > 0
-    ? `${summary.weekly_trend[0].date} to ${summary.weekly_trend[summary.weekly_trend.length - 1].date}`
-    : 'No data';
+  const metrics = report?.metrics;
+  const prov = report?.provenance;
+  const llmStatus = report?.llm_error || '';
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">Sustainability Report</h1>
-        <p className="text-slate-500 mt-1">Week of {dateRangeStr}</p>
-      </div>
-
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <Leaf size={18} className="text-green-600" />
-            <h3 className="text-sm font-semibold text-slate-500">Rescued (Week)</h3>
-          </div>
-          <p className="text-3xl font-bold text-navy">{weeklyRescued.toFixed(1)} <span className="text-lg font-medium text-slate-500">kg</span></p>
+    <div className="p-8 max-w-5xl mx-auto space-y-6 h-screen overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between shrink-0">
+        <div>
+          <h1 className="text-2xl font-bold text-navy">Sustainability Report</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            {demoMode ? "Automated sustainability narrative and impact metrics" : "LLM-grounded narrative backed by aggregated metrics"}
+          </p>
         </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <Cloud size={18} className="text-teal" />
-            <h3 className="text-sm font-semibold text-slate-500">CO₂ Saved</h3>
-          </div>
-          <p className="text-3xl font-bold text-navy">{weeklyCo2.toFixed(1)} <span className="text-lg font-medium text-slate-500">kg</span></p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <Users size={18} className="text-blue-600" />
-            <h3 className="text-sm font-semibold text-slate-500">Meals Served</h3>
-          </div>
-          <p className="text-3xl font-bold text-navy">{weeklyMeals}</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-3 mb-2">
-            <CheckCircle size={18} className="text-amber-500" />
-            <h3 className="text-sm font-semibold text-slate-500">Rescue Rate</h3>
-          </div>
-          <p className="text-3xl font-bold text-navy">{rescueRate}%</p>
+        <div className="flex gap-4 items-center">
+          <label className="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+            <input 
+              type="checkbox" 
+              checked={demoMode} 
+              onChange={e => setDemoMode(e.target.checked)} 
+              className="rounded text-teal focus:ring-teal"
+            />
+            <span className="text-sm font-medium text-slate-700">Presentation Mode</span>
+          </label>
+          <select 
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="border-slate-200 rounded-lg text-sm bg-white"
+          >
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last Quarter</option>
+          </select>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h3 className="text-lg font-bold text-navy mb-6">Weekly Breakdown Table</h3>
-        <div className="h-[280px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={summary.weekly_trend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `${v}kg`} />
-              <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number) => value.toFixed(1)} />
-              <Legend iconType="circle" />
-              <Bar dataKey="kg_rescued" name="Rescued (kg)" fill="#0d9488" radius={[4, 4, 0, 0]} barSize={32} />
-              <Bar dataKey="kg_wasted" name="Wasted (kg)" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={32} />
-            </BarChart>
-          </ResponsiveContainer>
+      {loading && <div className="p-8 animate-pulse text-slate-500">Generating report...</div>}
+      
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">
+          {error}
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-navy">Daily Log Table</h3>
+      {!demoMode && llmStatus && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800 flex items-center gap-2">
+          <AlertCircle size={16} />
+          <strong>Developer Notice:</strong> {llmStatus.includes('fell back') ? 'Add GEMINI_API_KEY to backend/.env to enable real narrative generation.' : llmStatus}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-teal/5 text-teal-dark border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 font-semibold">Date</th>
-                <th className="px-6 py-4 font-semibold">Rescued (kg)</th>
-                <th className="px-6 py-4 font-semibold">Wasted (kg)</th>
-                <th className="px-6 py-4 font-semibold">Meals Served</th>
-                <th className="px-6 py-4 font-semibold">CO₂ Saved (kg)</th>
-                <th className="px-6 py-4 font-semibold">Rescue Rate (%)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {summary.weekly_trend.map((stat, i) => {
-                const total = stat.kg_rescued + stat.kg_wasted;
-                const rate = total > 0 ? Math.round((stat.kg_rescued / total) * 100) : 0;
-                
-                return (
-                  <tr key={stat.date} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                    <td className="px-6 py-4 font-medium text-navy">{stat.date}</td>
-                    <td className="px-6 py-4 text-green-600 font-medium">{stat.kg_rescued.toFixed(1)}</td>
-                    <td className="px-6 py-4 text-red-500">{stat.kg_wasted.toFixed(1)}</td>
-                    <td className="px-6 py-4 text-slate-700">{stat.meals_served}</td>
-                    <td className="px-6 py-4 text-slate-700">{stat.co2_saved_kg.toFixed(1)}</td>
-                    <td className="px-6 py-4 font-medium text-navy">{rate}%</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
 
-      <p className="text-xs text-slate-500 text-center pb-8">
-        * CO₂ factor: 1 kg food rescued = 2.5 kg CO₂ equivalent saved. Cost estimate: ₹150/kg.
-      </p>
+      {!loading && report && (
+        <>
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-2">
+                <Leaf size={16} className="text-green-600" />
+                <h3 className="text-sm font-semibold text-slate-500">Rescued</h3>
+              </div>
+              <p className="text-2xl font-bold text-navy">{metrics?.surplus?.kg_rescued || 0} <span className="text-sm font-medium text-slate-500">kg</span></p>
+            </div>
+            
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-2">
+                <Cloud size={16} className="text-teal" />
+                <h3 className="text-sm font-semibold text-slate-500">CO2e Avoided</h3>
+              </div>
+              <p className="text-2xl font-bold text-navy">{metrics?.impact?.co2e_avoided_kg || 0} <span className="text-sm font-medium text-slate-500">kg</span></p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-2">
+                <Users size={16} className="text-blue-600" />
+                <h3 className="text-sm font-semibold text-slate-500">Meals Redistributed</h3>
+              </div>
+              <p className="text-2xl font-bold text-navy">{metrics?.impact?.meals_redistributed || 0}</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-2">
+                <CheckCircle size={16} className="text-amber-500" />
+                <h3 className="text-sm font-semibold text-slate-500">Rescue Rate</h3>
+              </div>
+              <p className="text-2xl font-bold text-navy">{metrics?.surplus?.rescue_rate_pct || 0}%</p>
+            </div>
+          </div>
+
+          {/* Narrative */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h2 className="font-bold text-navy">Executive Summary</h2>
+              <span className={clsx("text-xs font-semibold px-2 py-1 rounded border", 
+                report.narrative_source === 'gemini' ? 'bg-teal/10 text-teal border-teal/20' : 'bg-slate-100 text-slate-600 border-slate-200'
+              )}>
+                Source: {report.narrative_source}
+              </span>
+            </div>
+            <div className="p-6 prose prose-slate max-w-none text-slate-700">
+              {report.narrative.split('\n\n').map((paragraph: string, i: number) => (
+                <p key={i} className="mb-4 last:mb-0 leading-relaxed text-sm">{paragraph}</p>
+              ))}
+            </div>
+          </div>
+
+          {/* Provenance */}
+          {!demoMode && (
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <h2 className="font-bold text-navy mb-3 flex items-center gap-2">
+                <BarChart2 size={18} className="text-teal" /> Provenance & Assumptions
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-slate-500 text-xs font-medium mb-1">Data Sources</p>
+                  <ul className="text-slate-700 space-y-1 list-disc list-inside">
+                    <li>Synthetic SQLite Kitchen Data</li>
+                    <li>{prov?.processing_unit_dataset || 'processing_unit_dataset_v3_verified.csv'}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs font-medium mb-1">Standard Assumptions</p>
+                  <ul className="text-slate-700 space-y-1 list-disc list-inside">
+                    <li>Meals: {prov?.documented_assumptions?.meal_weight_kg || '0.4 kg/meal'}</li>
+                    <li>Emissions: {prov?.documented_assumptions?.co2e_factor || '2.5 kg CO2e/kg'}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {demoMode && (
+             <div className="text-center pb-8 pt-4">
+               <p className="text-xs text-slate-400">
+                 Note: CO2e factor based on global average (FAO, 2013). Meal weight assumption sourced from FSSAI institutional guidance (0.4kg/meal).
+               </p>
+             </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

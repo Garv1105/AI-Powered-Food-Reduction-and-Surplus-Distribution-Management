@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit, Factory } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Sidebar() {
@@ -14,7 +14,7 @@ export default function Sidebar() {
   useEffect(() => {
     async function ping() {
       try {
-        const res = await fetch('http://localhost:8000/health', { cache: 'no-store' });
+        const res = await fetch('http://127.0.0.1:8080/health', { cache: 'no-store' });
         const data = await res.json();
         setBackendOk(res.ok && data.status === 'ok');
       } catch {
@@ -30,8 +30,9 @@ export default function Sidebar() {
     { href: '/dashboard', label: 'Dashboard',         icon: LayoutDashboard },
     { href: '/anumaan',   label: 'Anumaan',            icon: BrainCircuit    },
     { href: '/surplus',   label: 'Surplus & Matching', icon: AlertTriangle   },
-    { href: '/map',       label: 'Map / Routing',      icon: MapIcon         },
-    { href: '/reports',   label: 'Reports',            icon: BarChart2       },
+    { href: '/map',             label: 'Map / Routing',      icon: MapIcon         },
+    { href: '/processing-unit', label: 'Processing Unit',     icon: Factory         },
+    { href: '/reports',         label: 'Reports',             icon: BarChart2       },
   ];
 
   return (

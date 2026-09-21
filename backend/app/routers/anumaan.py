@@ -14,7 +14,7 @@ from app.database import SessionLocal
 from app.models.consumption import ConsumptionHistory
 from sqlalchemy import func
 
-router = APIRouter(prefix="/anumaan", tags=["Anumaan"])
+router = APIRouter(tags=["Anumaan"])
 
 @router.get(
     "/forecast",

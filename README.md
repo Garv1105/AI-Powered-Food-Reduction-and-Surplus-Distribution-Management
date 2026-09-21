@@ -50,10 +50,14 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Edit `.env` and set your Supabase connection string:
+Edit `.env` and configure the following variables (all optional):
+
+* `DATABASE_URL`: Set to a PostgreSQL connection string if you want to use PostgreSQL. Defaults to `sqlite:///./test.db` if unset.
+* `GROQ_API_KEY`: Set this to a valid Groq API key (free at console.groq.com) to enable the hosted LLM fallback tier for sustainability reports. If Ollama is down, it will use Groq. If both are down, it falls back to a template.
 
 ```
 DATABASE_URL=postgresql://postgres:<your-password>@<your-project>.supabase.co:5432/postgres
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 > **Where to find this:** Supabase Dashboard → Project Settings → Database → Connection string → URI mode. Use the "Direct connection" URI (port 5432), not the pooler.

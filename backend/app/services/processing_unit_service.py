@@ -1,99 +1,72 @@
 """
 Processing Unit Metrics Service
 ================================
-All metrics are DERIVED at request time from the database — no hardcoded values.
+Aggregation rules (spec-compliant):
+  - process_yield_pct, downtime_pct, rejection_pct → ARITHMETIC MEAN
+  - downtime_hours, energy_consumed_kwh, revenue_inr, total_cost_inr,
+    daily_profit_inr, waste_loss_inr, downtime_opportunity_loss_inr,
+    net_good_output_kg, rejected_kg → SUM
+  - Period energy_intensity → SUM(energy_consumed_kwh) / SUM(net_good_output_kg)
+    (NOT average of daily intensities)
 
-Threshold definitions (documented):
-  - yield_pct < 82%        → flagged (below industry-acceptable minimum per UNIDO 2020)
-  - downtime_pct > 15%     → flagged (>2.4 hrs/day on a 16h schedule; maintenance trigger)
-  - rejection_rate_pct > 3% → flagged (exceeds FSSAI institutional quality standard)
+Flagging thresholds (documented):
+  - process_yield_pct < 82     → flagged (below UNIDO minimum for grain/pulse lines)
+  - downtime_pct > 15          → flagged (>2.4 hrs/day on 16h schedule; maintenance trigger)
+  - rejection_pct > 3          → flagged (exceeds FSSAI institutional quality standard)
 
-ROI assumption:
-  - Baseline loss rate: 18% of raw material input (UNIDO typical pre-monitoring; stated assumption)
-  - Material cost: INR 35/kg (NCDEX maize/pulse spot blend, Sept 2026; stated assumption)
-  waste_cost_saved = (baseline_loss_kg - actual_loss_kg) * 35
+Date-range anchoring: For relative ranges (7d, 30d), anchor to the LATEST
+AVAILABLE DATE IN THE DATASET, not the server clock.
 """
 
 import datetime
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func as sqlfunc
 
 from app.models.processing_unit import ProcessingUnitLog
 
-
-# Flagging thresholds — documented above
-YIELD_FLAG_THRESHOLD_PCT = 82.0
-DOWNTIME_FLAG_THRESHOLD_PCT = 15.0
-REJECTION_FLAG_THRESHOLD_PCT = 3.0
-
-# ROI constants — stated assumptions, cited in module docstring
-BASELINE_LOSS_RATE = 0.18          # 18% raw material lost before this system
-MATERIAL_COST_PER_KG_INR = 35.0   # INR/kg — NCDEX spot blend Sept 2026
+YIELD_FLAG_THRESHOLD = 82.0
+DOWNTIME_FLAG_THRESHOLD = 15.0
+REJECTION_FLAG_THRESHOLD = 3.0
 
 
-def _compute_daily_metrics(log: ProcessingUnitLog) -> Dict[str, Any]:
-    """Derive all metrics for a single log row."""
-    actual = log.actual_output_kg
-    expected = log.expected_output_kg
-    raw = log.raw_material_input_kg
-    downtime = log.machine_downtime_hours
-    scheduled = log.scheduled_operating_hours or 16.0
-    rejected = log.rejected_units
-    total = log.total_units_produced or 1
-
-    yield_pct = round((actual / expected) * 100, 2) if expected > 0 else 0.0
-    raw_loss_pct = round(((raw - actual) / raw) * 100, 2) if raw > 0 else 0.0
-    energy_intensity = round(log.energy_consumed_kwh / actual, 4) if actual > 0 else 0.0
-    downtime_pct = round((downtime / scheduled) * 100, 2) if scheduled > 0 else 0.0
-    rejection_rate_pct = round((rejected / total) * 100, 2) if total > 0 else 0.0
-    overproduction_variance_pct = round(((actual - expected) / expected) * 100, 2) if expected > 0 else 0.0
-
-    # ROI
-    baseline_loss_kg = raw * BASELINE_LOSS_RATE
-    actual_loss_kg = raw - actual
-    waste_prevented_kg = max(0.0, baseline_loss_kg - actual_loss_kg)
-    waste_cost_saved_inr = round(waste_prevented_kg * MATERIAL_COST_PER_KG_INR, 2)
-
-    flags = []
-    if yield_pct < YIELD_FLAG_THRESHOLD_PCT:
-        flags.append(f"Low yield: {yield_pct:.1f}% (threshold: {YIELD_FLAG_THRESHOLD_PCT}%)")
-    if downtime_pct > DOWNTIME_FLAG_THRESHOLD_PCT:
-        flags.append(f"High downtime: {downtime_pct:.1f}% (threshold: {DOWNTIME_FLAG_THRESHOLD_PCT}%)")
-    if rejection_rate_pct > REJECTION_FLAG_THRESHOLD_PCT:
-        flags.append(f"High rejection: {rejection_rate_pct:.1f}% (threshold: {REJECTION_FLAG_THRESHOLD_PCT}%)")
-
-    return {
-        "date": log.date.isoformat(),
-        "raw_material_input_kg": raw,
-        "actual_output_kg": actual,
-        "expected_output_kg": expected,
-        "machine_downtime_hours": downtime,
-        "energy_consumed_kwh": log.energy_consumed_kwh,
-        "yield_pct": yield_pct,
-        "raw_material_loss_pct": raw_loss_pct,
-        "energy_intensity_kwh_per_kg": energy_intensity,
-        "downtime_pct": downtime_pct,
-        "rejection_rate_pct": rejection_rate_pct,
-        "overproduction_variance_pct": overproduction_variance_pct,
-        "waste_prevented_kg": round(waste_prevented_kg, 2),
-        "waste_cost_saved_inr": waste_cost_saved_inr,
-        "is_flagged": len(flags) > 0,
-        "flag_reasons": flags,
-    }
-
-
-def get_unit_metrics(
-    db: Session,
-    unit_id: str,
-    start_date: datetime.date,
-    end_date: datetime.date,
-) -> Dict[str, Any]:
+def _parse_date_range(db: Session, unit_id: int, date_range: str):
     """
-    Returns:
-      - aggregate metrics across the date range
-      - last-30-days daily trend for charting
+    Returns (start_date, end_date) as datetime.date objects.
+
+    Supported formats:
+      - "7d"  → last 7 days anchored to latest dataset date
+      - "30d" → last 30 days anchored to latest dataset date
+      - "YYYY-MM-DD:YYYY-MM-DD" → explicit inclusive range
+
+    CRITICAL: relative ranges anchor to the latest available date in the DB,
+    NOT the server's current clock — so prototype historical data always renders.
     """
+    if date_range.endswith("d") and date_range[:-1].isdigit():
+        days = int(date_range[:-1])
+        # Anchor to latest date in dataset
+        latest = db.query(sqlfunc.max(ProcessingUnitLog.date)).filter(
+            ProcessingUnitLog.unit_id == unit_id
+        ).scalar()
+        if latest is None:
+            today = datetime.date.today()
+            return today - datetime.timedelta(days=days - 1), today
+        end_date = latest
+        start_date = end_date - datetime.timedelta(days=days - 1)
+        return start_date, end_date
+    elif ":" in date_range:
+        parts = date_range.split(":")
+        return datetime.date.fromisoformat(parts[0]), datetime.date.fromisoformat(parts[1])
+    else:
+        # Single date
+        d = datetime.date.fromisoformat(date_range)
+        return d, d
+
+
+def get_unit_metrics(db: Session, unit_id: int, date_range: str) -> Dict[str, Any]:
+    """Returns aggregated metrics + daily trend for the specified range."""
+    start_date, end_date = _parse_date_range(db, unit_id, date_range)
+
     logs = (
         db.query(ProcessingUnitLog)
         .filter(
@@ -106,57 +79,130 @@ def get_unit_metrics(
     )
 
     if not logs:
-        return {"unit_id": unit_id, "data_available": False, "trend": []}
+        return {
+            "unit_id": unit_id,
+            "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+            "data_available": False,
+            "days_with_data": 0,
+            "aggregates": None,
+            "trend": [],
+        }
 
-    daily = [_compute_daily_metrics(l) for l in logs]
+    n = len(logs)
 
-    n = len(daily)
-    avg_yield = round(sum(d["yield_pct"] for d in daily) / n, 2)
-    avg_loss = round(sum(d["raw_material_loss_pct"] for d in daily) / n, 2)
-    avg_energy_intensity = round(sum(d["energy_intensity_kwh_per_kg"] for d in daily) / n, 4)
-    avg_downtime = round(sum(d["downtime_pct"] for d in daily) / n, 2)
-    avg_rejection = round(sum(d["rejection_rate_pct"] for d in daily) / n, 2)
-    total_waste_cost_saved = round(sum(d["waste_cost_saved_inr"] for d in daily), 2)
-    total_waste_prevented_kg = round(sum(d["waste_prevented_kg"] for d in daily), 2)
-    flagged_days = sum(1 for d in daily if d["is_flagged"])
+    # SUM fields (per spec)
+    total_downtime_hours = sum(l.downtime_hours for l in logs)
+    total_energy_kwh = sum(l.energy_consumed_kwh for l in logs)
+    total_revenue_inr = sum(l.revenue_inr for l in logs)
+    total_cost_inr = sum(l.total_cost_inr for l in logs)
+    total_profit_inr = sum(l.daily_profit_inr for l in logs)
+    total_waste_loss_inr = sum(l.waste_loss_inr for l in logs)
+    total_downtime_opp_loss_inr = sum(l.downtime_opportunity_loss_inr for l in logs)
+    total_net_good_output_kg = sum(l.net_good_output_kg for l in logs)
+    total_rejected_kg = sum(l.rejected_kg for l in logs)
 
-    # Last 30 days for chart trend
-    trend_slice = daily[-30:]
+    # MEAN fields (per spec)
+    avg_yield_pct = sum(l.process_yield_pct for l in logs) / n
+    avg_downtime_pct = sum(l.downtime_pct for l in logs) / n
+    avg_rejection_pct = sum(l.rejection_pct for l in logs) / n
+
+    # Period energy intensity: SUM(kwh) / SUM(good_output) — NOT avg of daily values
+    period_energy_intensity = (
+        total_energy_kwh / total_net_good_output_kg
+        if total_net_good_output_kg > 0
+        else None
+    )
+
+    # Build daily trend (raw CSV values, no recalculation)
+    trend = []
+    for l in logs:
+        trend.append({
+            "date": l.date.isoformat(),
+            "day_of_week": l.day_of_week,
+            "process_yield_pct": l.process_yield_pct,
+            "downtime_pct": l.downtime_pct,
+            "rejection_pct": l.rejection_pct,
+            "energy_intensity_kwh_per_kg": l.energy_intensity_kwh_per_kg,
+            "net_good_output_kg": l.net_good_output_kg,
+            "daily_profit_inr": l.daily_profit_inr,
+            "root_cause": l.root_cause,
+        })
 
     return {
         "unit_id": unit_id,
+        "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
         "data_available": True,
-        "period": {"start": start_date.isoformat(), "end": end_date.isoformat(), "days": n},
+        "days_with_data": n,
         "aggregates": {
-            "avg_yield_pct": avg_yield,
-            "avg_raw_material_loss_pct": avg_loss,
-            "avg_energy_intensity_kwh_per_kg": avg_energy_intensity,
-            "avg_downtime_pct": avg_downtime,
-            "avg_rejection_rate_pct": avg_rejection,
-            "flagged_days": flagged_days,
-            "flagged_days_pct": round(flagged_days / n * 100, 1),
+            # MEAN metrics
+            "avg_process_yield_pct": round(avg_yield_pct, 3),
+            "avg_downtime_pct": round(avg_downtime_pct, 3),
+            "avg_rejection_pct": round(avg_rejection_pct, 3),
+            # SUM metrics
+            "total_downtime_hours": round(total_downtime_hours, 2),
+            "total_energy_consumed_kwh": round(total_energy_kwh, 1),
+            "total_revenue_inr": round(total_revenue_inr, 2),
+            "total_cost_inr": round(total_cost_inr, 2),
+            "total_profit_inr": round(total_profit_inr, 2),
+            "total_waste_loss_inr": round(total_waste_loss_inr, 2),
+            "total_downtime_opportunity_loss_inr": round(total_downtime_opp_loss_inr, 2),
+            "total_net_good_output_kg": round(total_net_good_output_kg, 2),
+            "total_rejected_kg": round(total_rejected_kg, 2),
+            # Period-level derived metric (spec: SUM/SUM, not avg of daily)
+            "period_energy_intensity_kwh_per_kg": (
+                round(period_energy_intensity, 4) if period_energy_intensity else None
+            ),
         },
-        "roi": {
-            "total_waste_prevented_kg": total_waste_prevented_kg,
-            "total_waste_cost_saved_inr": total_waste_cost_saved,
-            "baseline_assumption": "18% material loss rate (UNIDO 2020 pre-monitoring benchmark)",
-            "cost_assumption": "INR 35/kg (NCDEX maize/pulse blend, Sept 2026)",
-        },
-        "trend": trend_slice,
+        "trend": trend,
     }
 
 
-def get_flagged_batches(db: Session, unit_id: str) -> List[Dict[str, Any]]:
-    """Return all days that crossed any flagging threshold, most recent first."""
+def get_flagged_days(db: Session, unit_id: int) -> List[Dict[str, Any]]:
+    """
+    Returns all days that crossed any threshold, most recent first.
+    Each entry includes: date, failed_metrics (metric, value, threshold), root_cause.
+    """
     logs = (
         db.query(ProcessingUnitLog)
         .filter(ProcessingUnitLog.unit_id == unit_id)
         .order_by(ProcessingUnitLog.date.desc())
         .all()
     )
+
     flagged = []
-    for log in logs:
-        metrics = _compute_daily_metrics(log)
-        if metrics["is_flagged"]:
-            flagged.append(metrics)
+    for l in logs:
+        failed = []
+        if l.process_yield_pct is not None and l.process_yield_pct < YIELD_FLAG_THRESHOLD:
+            failed.append({
+                "metric": "process_yield_pct",
+                "value": l.process_yield_pct,
+                "threshold": f"< {YIELD_FLAG_THRESHOLD}%",
+                "direction": "below_minimum",
+            })
+        if l.downtime_pct is not None and l.downtime_pct > DOWNTIME_FLAG_THRESHOLD:
+            failed.append({
+                "metric": "downtime_pct",
+                "value": l.downtime_pct,
+                "threshold": f"> {DOWNTIME_FLAG_THRESHOLD}%",
+                "direction": "above_maximum",
+            })
+        if l.rejection_pct is not None and l.rejection_pct > REJECTION_FLAG_THRESHOLD:
+            failed.append({
+                "metric": "rejection_pct",
+                "value": l.rejection_pct,
+                "threshold": f"> {REJECTION_FLAG_THRESHOLD}%",
+                "direction": "above_maximum",
+            })
+
+        if failed:
+            flagged.append({
+                "date": l.date.isoformat(),
+                "day_of_week": l.day_of_week,
+                "root_cause": l.root_cause,
+                "failed_metrics": failed,
+                "downtime_hours": l.downtime_hours,
+                "net_good_output_kg": l.net_good_output_kg,
+                "daily_profit_inr": l.daily_profit_inr,
+            })
+
     return flagged

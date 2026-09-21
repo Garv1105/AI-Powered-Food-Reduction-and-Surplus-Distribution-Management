@@ -128,7 +128,9 @@ def calculate_ngo_matches(db: Session, surplus_event: SurplusEvent, ngos_list: L
             "match_score": round(max(0, total_score), 1),
             "distance_km": round(actual_road_distance, 1),
             "eta_minutes": int(travel_time_hours * 60),
-            "match_reason": "Excellent capacity fit" if capacity_score > 80 else "Good distance and timing"
+            "match_reason": "Excellent capacity fit" if capacity_score > 80 else "Good distance and timing",
+            "lat": ngo.lat,
+            "lng": ngo.lng
         })
 
     # Sort DESC

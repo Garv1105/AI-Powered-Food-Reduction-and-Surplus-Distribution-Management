@@ -54,7 +54,8 @@ export default function RouteMap({ route, ngos }: RouteMapProps) {
         .addTo(m);
 
       // NGO Markers
-      ngos.forEach((ngo) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ngos.forEach((ngo: any) => {
         const el = document.createElement('div');
         el.className = 'w-6 h-6 bg-teal rounded-full border-[3px] border-white shadow-md flex items-center justify-center cursor-pointer';
         const inner = document.createElement('div');
@@ -62,12 +63,12 @@ export default function RouteMap({ route, ngos }: RouteMapProps) {
         el.appendChild(inner);
 
         new maplibregl.Marker({ element: el })
-          .setLngLat([ngo.lng, ngo.lat])
+          .setLngLat([ngo.lng ?? ngo.distance_km, ngo.lat ?? 0])
           .setPopup(
             new maplibregl.Popup({ offset: 25 }).setHTML(
               `<div class="p-1">
-                 <h3 class="font-bold text-navy mb-1">${ngo.name}</h3>
-                 <p class="text-xs text-slate-600 mb-1">Capacity: ${ngo.capacity_kg}kg</p>
+                 <h3 class="font-bold text-navy mb-1">${ngo.ngo_name ?? ngo.name ?? ''}</h3>
+                 <p class="text-xs text-slate-600 mb-1">Score: ${ngo.match_score ?? ''}</p>
                  <span class="text-xs font-semibold text-teal bg-teal/10 px-2 py-0.5 rounded">${ngo.distance_km} km away</span>
                </div>`
             )

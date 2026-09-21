@@ -21,6 +21,24 @@ export default function SurplusAlertList({ events: initialEvents }: { events: Su
       .finally(() => setLoading(false));
   }, [initialEvents]);
 
+  const getUrgencyBorder = (level: string) => {
+    switch (level) {
+      case 'RED': return 'bg-red-500';
+      case 'AMBER': return 'bg-amber-500';
+      case 'GREEN': return 'bg-green-500';
+      case 'EXPIRED': return 'bg-slate-300';
+      default: return 'bg-slate-300';
+    }
+  };
+
+  const formatTime = (decimalHours: number) => {
+    if (decimalHours <= 0) return '0m';
+    const h = Math.floor(decimalHours);
+    const m = Math.round((decimalHours - h) * 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+
   const getUrgencyColor = (urgency: string) => {
     switch (urgency.toUpperCase()) {
       case 'EXPIRED': return 'bg-slate-400';
@@ -79,11 +97,13 @@ export default function SurplusAlertList({ events: initialEvents }: { events: Su
                 <div className="flex items-center justify-between text-xs">
                   <div className={clsx('flex items-center gap-1 font-medium', getUrgencyTextColor(event.urgency_level))}>
                     <Clock size={12} />
-                    {isExpired ? 'EXPIRED' : `${event.rescue_window_hours}h remaining`}
+                    {isExpired ? 'EXPIRED' : `${formatTime(event.rescue_window_hours)} remaining`}
                   </div>
-                  <span className="capitalize px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px] font-semibold">
-                    {event.status}
-                  </span>
+                  {!isExpired && (
+                    <span className="capitalize px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px] font-semibold">
+                      {event.status}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
