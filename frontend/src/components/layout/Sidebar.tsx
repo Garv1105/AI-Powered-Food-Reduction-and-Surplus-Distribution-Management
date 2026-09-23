@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit, Factory, Zap } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit, Factory } from 'lucide-react';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
@@ -57,8 +57,8 @@ export default function Sidebar() {
       {/* Brand Header */}
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-[0_0_15px_rgba(232,163,61,0.5)]">
-            <Zap size={18} className="text-ink-base" fill="currentColor" />
+          <div className="flex items-center justify-center">
+            <span className="text-2xl leading-none drop-shadow-[0_0_10px_rgba(95,174,110,0.6)]">🌱</span>
           </div>
           <div>
             <h1 className="text-2xl font-display font-bold text-white tracking-tight glow-text-primary">Anna Setu</h1>
