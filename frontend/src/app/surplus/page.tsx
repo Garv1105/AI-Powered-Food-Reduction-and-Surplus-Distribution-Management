@@ -54,12 +54,12 @@ export default function SurplusPage() {
   };
 
   const getUrgencyBadge = (urgency: string) => {
-    switch (urgency.toLowerCase()) {
-      case 'critical': return 'bg-red-100 text-red-700 border-red-200';
-      case 'high': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'medium': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'low': return 'bg-green-100 text-green-700 border-green-200';
-      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+    switch (urgency.toUpperCase()) {
+      case 'RED': return 'bg-status-critical/10 text-status-critical border-status-critical/30';
+      case 'AMBER': return 'bg-status-warning/10 text-status-warning border-status-warning/30';
+      case 'GREEN': return 'bg-status-success/10 text-status-success border-status-success/30';
+      case 'EXPIRED': return 'bg-ink-raised text-content-secondary border-ink-raised';
+      default: return 'bg-ink-raised text-content-secondary border-ink-raised';
     }
   };
 
@@ -72,82 +72,98 @@ export default function SurplusPage() {
   };
 
   return (
-    <div className="p-8 h-screen flex flex-col">
-      <div className="mb-6 shrink-0">
-        <h1 className="text-2xl font-bold text-navy">Surplus & Matching</h1>
-        <p className="text-slate-500 mt-1">Manage food surplus and connect with NGOs</p>
+    <div className="p-8 h-screen flex flex-col max-w-7xl mx-auto">
+      <div className="mb-6 shrink-0 border-b border-ink-raised pb-4">
+        <h1 className="text-3xl font-display font-bold text-content-primary">Surplus & Matching</h1>
+        <p className="text-content-secondary mt-1 font-mono text-sm tracking-wide uppercase">Triage Queue &middot; Dispatch Control</p>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 mb-6 shrink-0">
-          {error}
+        <div className="bg-status-critical/10 text-status-critical p-4 rounded-sm border border-status-critical/20 mb-6 shrink-0 font-mono text-sm">
+          ERROR: {error}
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex gap-8">
+      <div className="flex-1 min-h-0 flex gap-6">
         {/* Left Column: Surplus Events */}
-        <div className="w-1/2 flex flex-col h-full bg-white rounded-xl shadow-sm border border-slate-100">
-          <div className="p-4 border-b border-slate-100">
-            <h2 className="font-bold text-navy">Active Surplus ({events.length})</h2>
+        <div className="w-1/2 flex flex-col h-full bg-ink-surface rounded-sm border border-ink-raised">
+          <div className="p-4 border-b border-ink-raised">
+            <h2 className="font-display font-bold text-content-primary tracking-wide uppercase flex items-center gap-2">
+              Active Surplus
+              <span className="bg-ink-raised text-accent-primary font-mono text-[10px] py-0.5 px-1.5 rounded-sm">
+                {events.length}
+              </span>
+            </h2>
           </div>
           
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {loadingEvents ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-32 bg-slate-100 rounded-xl animate-pulse"></div>
+                  <div key={i} className="h-24 bg-ink-raised rounded-sm animate-pulse"></div>
                 ))}
               </div>
             ) : events.length === 0 ? (
-              <p className="text-center text-slate-500 py-10">No active surplus items right now.</p>
+              <p className="text-center text-content-secondary font-mono text-sm py-10 uppercase tracking-widest">No active surplus.</p>
             ) : (
               events.map((event) => {
                 const isSelected = selectedEvent?.id === event.id;
+                const isExpired = event.urgency_level.toUpperCase() === 'EXPIRED';
+                const isRed = event.urgency_level.toUpperCase() === 'RED';
                 
                 return (
                   <div 
                     key={event.id}
                     onClick={() => handleSelectEvent(event)}
                     className={clsx(
-                      'p-4 rounded-xl border cursor-pointer transition-all',
+                      'p-4 rounded-sm border cursor-pointer transition-all flex gap-3',
                       isSelected 
-                        ? 'border-teal ring-1 ring-teal bg-teal/5 shadow-md' 
-                        : 'border-slate-200 hover:border-slate-300 hover:shadow-sm bg-white'
+                        ? 'border-accent-primary bg-ink-raised shadow-[0_0_8px_rgba(232,163,61,0.2)]' 
+                        : isExpired ? 'border-ink-raised bg-ink-base opacity-50'
+                        : isRed ? 'border-status-critical/30 bg-ink-raised/50'
+                        : 'border-ink-raised bg-ink-surface hover:bg-ink-raised'
                     )}
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center text-2xl border border-slate-100">
-                          {categoryEmojis[event.category.toLowerCase()] || '🍱'}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-navy capitalize">{event.category}</h3>
-                          <p className="text-sm text-slate-500">{event.kitchen_name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xl font-bold text-navy">{event.quantity_kg}</span>
-                        <span className="text-sm font-medium text-slate-500 ml-1">kg</span>
-                      </div>
+                    <div className="flex flex-col items-center gap-2 mt-1 shrink-0">
+                      <div className={clsx('w-2 h-2 rounded-full', 
+                        isExpired ? 'bg-content-secondary' : 
+                        isRed ? 'bg-status-critical shadow-[0_0_8px_rgba(217,86,74,0.5)] animate-pulse' : 
+                        event.urgency_level.toUpperCase() === 'AMBER' ? 'bg-status-warning' : 'bg-status-success')} 
+                      />
                     </div>
                     
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                      <div className="flex gap-2">
-                        <span className={clsx('text-xs font-semibold px-2 py-1 rounded-md border capitalize', getUrgencyBadge(event.urgency_level))}>
-                          {event.urgency_level}
-                        </span>
-                        {event.urgency_level.toUpperCase() !== 'EXPIRED' && (
-                          <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200 capitalize">
-                            {event.status}
-                          </span>
-                        )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className={clsx("font-medium uppercase tracking-wider text-sm", isExpired ? "text-content-secondary line-through" : "text-content-primary")}>
+                            {event.category}
+                          </h3>
+                          <p className="text-[11px] font-mono text-content-secondary uppercase truncate">{event.kitchen_name}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className={clsx("text-lg font-mono font-bold", isExpired ? "text-content-secondary line-through" : "text-accent-secondary")}>{event.quantity_kg}</span>
+                          <span className="text-xs font-mono text-content-secondary ml-1">kg</span>
+                        </div>
                       </div>
                       
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
-                        <Clock size={14} className={event.rescue_window_hours < 2 ? 'text-red-500' : 'text-slate-400'} />
-                        <span className={event.rescue_window_hours < 2 ? 'text-red-600' : ''}>
-                          {formatTime(event.rescue_window_hours)} left
-                        </span>
+                      <div className="flex items-center justify-between border-t border-ink-raised pt-2">
+                        <div className="flex gap-2">
+                          <span className={clsx('text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-sm border', getUrgencyBadge(event.urgency_level))}>
+                            {event.urgency_level}
+                          </span>
+                          {!isExpired && (
+                            <span className="text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.5 bg-ink-raised text-content-secondary rounded-sm border border-ink-raised">
+                              {event.status}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className={clsx("flex items-center gap-1.5 font-mono text-xs tabular-nums", 
+                            isExpired ? "text-content-secondary" : 
+                            event.rescue_window_hours < 2 ? "text-status-critical" : "text-content-secondary")}>
+                          <Clock size={12} className={!isExpired && event.rescue_window_hours < 2 ? 'animate-pulse' : ''} />
+                          {isExpired ? 'EXPIRED' : `${formatTime(event.rescue_window_hours)} T-MINUS`}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -157,8 +173,8 @@ export default function SurplusPage() {
           </div>
 
           {/* Manual Entry Form */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl">
-            <h3 className="font-bold text-navy mb-3 text-sm">Manual Surplus Entry (Demo Control)</h3>
+          <div className="p-4 border-t border-ink-raised bg-ink-base rounded-b-sm">
+            <h3 className="font-mono text-content-secondary mb-2 text-xs uppercase tracking-widest">Manual Entry Override</h3>
             <form 
               className="flex flex-col gap-2"
               onSubmit={async (e) => {
@@ -182,25 +198,25 @@ export default function SurplusPage() {
               }}
             >
               <div className="flex gap-2">
-                <select name="category" className="flex-1 p-2 border border-slate-200 rounded text-sm" required defaultValue="Rice">
+                <select name="category" className="flex-1 p-2 bg-ink-surface border border-ink-raised rounded-sm text-xs font-mono text-content-primary" required defaultValue="Rice">
                   <option value="Rice">Rice</option>
                   <option value="Dal">Dal</option>
                   <option value="Vegetable_Curry">Vegetable_Curry</option>
                   <option value="Roti_Bread">Roti_Bread</option>
                 </select>
-                <input name="quantity" type="number" placeholder="Qty (kg)" step="0.1" required className="w-24 p-2 border border-slate-200 rounded text-sm" />
-                <input name="hours" type="number" placeholder="Hrs Left" step="0.5" required className="w-24 p-2 border border-slate-200 rounded text-sm" />
-                <button type="submit" className="bg-navy text-white px-4 py-2 rounded text-sm font-medium hover:bg-slate-800 transition-colors">Seed</button>
+                <input name="quantity" type="number" placeholder="Qty (kg)" step="0.1" required className="w-20 p-2 bg-ink-surface border border-ink-raised rounded-sm text-xs font-mono text-content-primary focus:border-accent-primary focus:outline-none" />
+                <input name="hours" type="number" placeholder="Hrs Left" step="0.5" required className="w-20 p-2 bg-ink-surface border border-ink-raised rounded-sm text-xs font-mono text-content-primary focus:border-accent-primary focus:outline-none" />
+                <button type="submit" className="bg-ink-raised text-accent-primary border border-accent-primary/50 hover:bg-accent-primary hover:text-ink-base px-3 py-1.5 rounded-sm text-xs font-mono uppercase tracking-widest transition-colors">Seed</button>
               </div>
             </form>
           </div>
         </div>
 
         {/* Right Column: NGO Matches */}
-        <div className="w-1/2 flex flex-col h-full bg-slate-50 rounded-xl border border-slate-200">
+        <div className="w-1/2 flex flex-col h-full bg-ink-base rounded-sm border border-ink-raised">
           {!selectedEvent ? (
-            <div className="flex-1 flex items-center justify-center text-slate-500">
-              <p>Select a surplus event to see NGO matches</p>
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-content-secondary font-mono text-sm tracking-widest uppercase">Select an event to match</p>
             </div>
           ) : (
             <NGOMatchList 

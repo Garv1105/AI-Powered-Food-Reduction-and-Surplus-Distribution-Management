@@ -6,16 +6,28 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+        display: ['var(--font-space-grotesk)', 'sans-serif'],
+      },
       colors: {
-        navy: {
-          DEFAULT: '#0f172a',
-          800: '#1e293b',
-          700: '#334155'
+        ink: {
+          base: '#14181F',
+          surface: '#1B212B',
+          raised: '#232B38',
         },
-        teal: {
-          DEFAULT: '#0d9488',
-          light: '#14b8a6',
-          dark: '#0f766e'
+        accent: {
+          primary: '#E8A33D',
+          secondary: '#4FB5C7',
+        },
+        status: {
+          success: '#5FAE6E',
+          warning: '#E8A33D',
+          critical: '#D9564A',
+        },
+        content: {
+          primary: '#F2F0EA',
+          secondary: '#9AA3B2',
         }
       }
     },

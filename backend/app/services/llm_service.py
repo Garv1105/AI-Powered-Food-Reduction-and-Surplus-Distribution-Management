@@ -25,7 +25,7 @@ def try_gemini(prompt: str) -> Optional[str]:
         logger.warning("Gemini skipped: GEMINI_API_KEY not configured.")
         return None
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
     
     try:
         response = httpx.post(

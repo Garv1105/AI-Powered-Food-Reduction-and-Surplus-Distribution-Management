@@ -76,102 +76,90 @@ export default function DashboardPage() {
   if (!summary || !forecast) return null;
 
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-navy">Dashboard</h1>
-        <p className="text-slate-500 mt-1">Real-time overview · BMTC Staff Canteen, Bengaluru</p>
-      </div>
-
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-50 text-green-600 rounded-lg flex items-center justify-center shrink-0">
-            <Leaf size={24} />
+    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+      <header className="flex justify-between items-end border-b border-ink-raised pb-4">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-content-primary">Dashboard</h1>
+          <p className="text-content-secondary mt-1 font-mono text-sm tracking-wide">REAL-TIME OVERVIEW &middot; BMTC STAFF CANTEEN, BENGALURU</p>
+        </div>
+        
+        <div className="flex gap-6">
+          <div className="text-right">
+            <p className="text-xs text-content-secondary uppercase tracking-widest font-medium mb-1">Rescued Today</p>
+            <p className="text-2xl font-bold font-mono text-status-success">{summary.kg_rescued_today} kg</p>
           </div>
-          <div>
-            <p className="text-sm text-slate-500 font-medium">Rescued Today</p>
-            <p className="text-2xl font-bold text-green-600">{summary.kg_rescued_today} kg</p>
+          <div className="w-px bg-ink-raised" />
+          <div className="text-right">
+            <p className="text-xs text-content-secondary uppercase tracking-widest font-medium mb-1">Wasted Today</p>
+            <p className="text-2xl font-bold font-mono text-status-critical">{summary.kg_wasted_today} kg</p>
+          </div>
+          <div className="w-px bg-ink-raised" />
+          <div className="text-right">
+            <p className="text-xs text-content-secondary uppercase tracking-widest font-medium mb-1">Active Alerts</p>
+            <p className="text-2xl font-bold font-mono text-status-warning">{summary.active_surplus_count}</p>
+          </div>
+          <div className="w-px bg-ink-raised" />
+          <div className="text-right">
+            <p className="text-xs text-content-secondary uppercase tracking-widest font-medium mb-1">CO₂ Saved</p>
+            <p className="text-2xl font-bold font-mono text-accent-secondary">{summary.co2_saved_today_kg} kg</p>
           </div>
         </div>
+      </header>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-50 text-red-600 rounded-lg flex items-center justify-center shrink-0">
-            <Trash2 size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-slate-500 font-medium">Wasted Today</p>
-            <p className="text-2xl font-bold text-red-600">{summary.kg_wasted_today} kg</p>
-          </div>
+      {/* Hero Chart */}
+      <section className="bg-ink-surface border border-ink-raised p-6 rounded-sm">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-display text-content-primary uppercase tracking-wide flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-accent-secondary animate-pulse" />
+            Demand Forecast
+          </h2>
+          <span className="text-xs font-mono text-content-secondary">ANUMAAN XGBOOST ENGINE &middot; MAE 49</span>
         </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center shrink-0">
-            <AlertCircle size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-slate-500 font-medium">Active Surplus</p>
-            <p className="text-2xl font-bold text-amber-600">{summary.active_surplus_count} items</p>
-          </div>
+        <div className="h-80 w-full">
+          <ForecastChart data={forecast.predictions} category={forecast.category} />
         </div>
+      </section>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-          <div className="w-12 h-12 bg-teal/10 text-teal rounded-lg flex items-center justify-center shrink-0">
-            <Cloud size={24} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="col-span-2 bg-ink-surface border border-ink-raised p-6 rounded-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-display text-content-primary uppercase tracking-wide">Production Plan</h2>
+            <button 
+              onClick={handleConfirmPlan}
+              className="bg-accent-primary hover:bg-opacity-90 text-ink-base px-4 py-1.5 rounded-sm font-medium text-sm transition-colors uppercase tracking-wide"
+            >
+              Confirm Plan
+            </button>
           </div>
-          <div>
-            <p className="text-sm text-slate-500 font-medium">CO₂ Saved</p>
-            <p className="text-2xl font-bold text-teal">{summary.co2_saved_today_kg} kg</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative group">
-            <div className="absolute top-4 right-4 text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-50 p-2 rounded border border-slate-100 z-10 shadow-sm pointer-events-none w-64">
-              Forecast powered by Anumaan (XGBoost, MAE ~49 customers on held-out test data).
-            </div>
-            <ForecastChart data={forecast.predictions} category={forecast.category} />
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-navy">Today's Production Plan</h2>
-              <button 
-                onClick={handleConfirmPlan}
-                className="bg-teal hover:bg-teal-600 text-white px-4 py-2 rounded font-medium transition-colors"
-              >
-                Confirm Plan
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50 text-slate-600">
-                  <tr>
-                    <th className="px-4 py-2">Category</th>
-                    <th className="px-4 py-2">Forecast</th>
-                    <th className="px-4 py-2">Buffer</th>
-                    <th className="px-4 py-2">Recommended</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left font-mono">
+              <thead className="bg-ink-raised text-content-secondary text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Category</th>
+                  <th className="px-4 py-3 font-medium">Forecast</th>
+                  <th className="px-4 py-3 font-medium">Buffer</th>
+                  <th className="px-4 py-3 font-medium">Recommended</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-raised">
+                {productionPlan?.categories.map((cat: any) => (
+                  <tr key={cat.category_id} className="hover:bg-ink-raised/30 transition-colors">
+                    <td className="px-4 py-3 text-content-primary capitalize">{cat.category_name}</td>
+                    <td className="px-4 py-3 text-content-secondary">{cat.predicted_qty} {cat.unit}</td>
+                    <td className="px-4 py-3 text-content-secondary" title={cat.buffer_reasoning}>
+                      {(cat.buffer_pct * 100).toFixed(1)}%
+                    </td>
+                    <td className="px-4 py-3 font-bold text-accent-secondary">{cat.recommended_production_qty} {cat.unit}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {productionPlan?.categories.map((cat: any) => (
-                    <tr key={cat.category_id} className="border-b border-slate-100">
-                      <td className="px-4 py-2 font-medium capitalize">{cat.category_name}</td>
-                      <td className="px-4 py-2">{cat.predicted_qty} {cat.unit}</td>
-                      <td className="px-4 py-2 text-slate-500" title={cat.buffer_reasoning}>
-                        {(cat.buffer_pct * 100).toFixed(1)}%
-                      </td>
-                      <td className="px-4 py-2 font-bold text-navy">{cat.recommended_production_qty} {cat.unit}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-        <div className="col-span-1">
+        </section>
+
+        <section className="col-span-1">
           <SurplusAlertList events={surplusEvents} />
-        </div>
+        </section>
       </div>
     </div>
   );

@@ -11,96 +11,88 @@ export default function SurplusAlertList({ events: initialEvents }: { events: Su
   const [loading, setLoading] = useState(initialEvents.length === 0);
 
   useEffect(() => {
-    // If not passed initially, or just always fetch to be safe
     api.getSurplus('active')
-      .then((data) => {
-        // Data is already sorted by backend
-        setEvents(data);
-      })
+      .then((data) => setEvents(data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [initialEvents]);
 
-  const getUrgencyBorder = (level: string) => {
-    switch (level) {
-      case 'RED': return 'bg-red-500';
-      case 'AMBER': return 'bg-amber-500';
-      case 'GREEN': return 'bg-green-500';
-      case 'EXPIRED': return 'bg-slate-300';
-      default: return 'bg-slate-300';
-    }
-  };
-
   const formatTime = (decimalHours: number) => {
-    if (decimalHours <= 0) return '0m';
+    if (decimalHours <= 0) return '00:00';
     const h = Math.floor(decimalHours);
     const m = Math.round((decimalHours - h) * 60);
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m}m`;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} T-MINUS`;
   };
 
-  const getUrgencyColor = (urgency: string) => {
+  const getUrgencyIndicator = (urgency: string) => {
     switch (urgency.toUpperCase()) {
-      case 'EXPIRED': return 'bg-slate-400';
-      case 'RED': return 'bg-red-500';
-      case 'AMBER': return 'bg-amber-500';
-      case 'GREEN': return 'bg-green-500';
-      default: return 'bg-slate-500';
+      case 'EXPIRED': return 'bg-content-secondary';
+      case 'RED': return 'bg-status-critical shadow-[0_0_8px_rgba(217,86,74,0.5)]';
+      case 'AMBER': return 'bg-status-warning';
+      case 'GREEN': return 'bg-status-success';
+      default: return 'bg-content-secondary';
     }
   };
 
-  const getUrgencyTextColor = (urgency: string) => {
+  const getUrgencyText = (urgency: string) => {
     switch (urgency.toUpperCase()) {
-      case 'EXPIRED': return 'text-slate-400';
-      case 'RED': return 'text-red-600';
-      case 'AMBER': return 'text-amber-600';
-      case 'GREEN': return 'text-green-600';
-      default: return 'text-slate-600';
+      case 'EXPIRED': return 'text-content-secondary';
+      case 'RED': return 'text-status-critical';
+      case 'AMBER': return 'text-status-warning';
+      case 'GREEN': return 'text-status-success';
+      default: return 'text-content-secondary';
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-navy flex items-center gap-2">
-          Active Surplus Alerts
+    <div className="bg-ink-surface rounded-sm border border-ink-raised p-6 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4 pb-2 border-b border-ink-raised">
+        <h3 className="text-lg font-display text-content-primary uppercase tracking-wide flex items-center gap-2">
+          Active Surplus
           {!loading && events.length > 0 && (
-            <span className="bg-slate-100 text-slate-600 text-xs py-0.5 px-2 rounded-full font-medium">
+            <span className="bg-ink-raised text-accent-primary font-mono text-[10px] py-0.5 px-1.5 rounded-sm">
               {events.length}
             </span>
           )}
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+      <div className="flex-1 overflow-y-auto space-y-2">
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-slate-100 rounded-lg animate-pulse"></div>
+              <div key={i} className="h-16 bg-ink-raised rounded-sm animate-pulse"></div>
             ))}
           </div>
         ) : events.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-8">No active surplus alerts.</p>
+          <p className="text-content-secondary text-sm font-mono text-center py-8">NO ACTIVE SURPLUS.</p>
         ) : (
           events.map((event) => {
             const isExpired = event.urgency_level.toUpperCase() === 'EXPIRED';
+            const isRed = event.urgency_level.toUpperCase() === 'RED';
             return (
-            <div key={event.id} className={clsx('p-3 rounded-lg border bg-slate-50 transition-colors flex gap-3', isExpired ? 'opacity-60 border-slate-200 bg-slate-100' : 'border-slate-100 hover:bg-slate-100')}>
-              <div className={clsx('w-1.5 rounded-full shrink-0', getUrgencyColor(event.urgency_level))}></div>
+            <div key={event.id} className={clsx(
+              'p-3 rounded-sm border transition-colors flex gap-3', 
+              isExpired ? 'opacity-50 border-ink-raised bg-ink-base' : 
+              isRed ? 'border-status-critical/30 bg-ink-raised/50' : 'border-ink-raised bg-ink-surface hover:bg-ink-raised'
+            )}>
+              <div className="flex flex-col items-center gap-2 mt-1 shrink-0">
+                <div className={clsx('w-2 h-2 rounded-full', getUrgencyIndicator(event.urgency_level))} />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-1">
-                  <p className={clsx('font-semibold truncate capitalize', isExpired ? 'text-slate-500 line-through' : 'text-navy')}>{event.category}</p>
-                  <span className={clsx('font-bold whitespace-nowrap ml-2', isExpired ? 'text-slate-500 line-through' : 'text-navy')}>{event.quantity_kg} kg</span>
+                <div className="flex justify-between items-start mb-0.5">
+                  <p className={clsx('text-sm font-medium truncate uppercase tracking-wider', isExpired ? 'text-content-secondary line-through' : 'text-content-primary')}>{event.category}</p>
+                  <span className={clsx('font-mono font-bold whitespace-nowrap ml-2', isExpired ? 'text-content-secondary line-through' : 'text-accent-secondary')}>{event.quantity_kg} kg</span>
                 </div>
-                <p className="text-xs text-slate-500 truncate mb-2">{event.kitchen_name}</p>
+                <p className="text-[11px] font-mono text-content-secondary truncate mb-2 uppercase">{event.kitchen_name}</p>
                 
-                <div className="flex items-center justify-between text-xs">
-                  <div className={clsx('flex items-center gap-1 font-medium', getUrgencyTextColor(event.urgency_level))}>
-                    <Clock size={12} />
-                    {isExpired ? 'EXPIRED' : `${formatTime(event.rescue_window_hours)} remaining`}
+                <div className="flex items-center justify-between">
+                  <div className={clsx('flex items-center gap-1.5 font-mono text-xs tabular-nums', getUrgencyText(event.urgency_level))}>
+                    <Clock size={12} className={isRed ? 'animate-pulse' : ''} />
+                    {isExpired ? 'EXPIRED' : formatTime(event.rescue_window_hours)}
                   </div>
                   {!isExpired && (
-                    <span className="capitalize px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded text-[10px] font-semibold">
+                    <span className="font-mono text-[9px] uppercase tracking-widest text-content-secondary border border-ink-raised px-1 py-0.5 rounded-sm">
                       {event.status}
                     </span>
                   )}
@@ -111,7 +103,7 @@ export default function SurplusAlertList({ events: initialEvents }: { events: Su
         )}
       </div>
 
-      <Link href="/surplus" className="mt-4 text-center block text-sm font-medium text-teal hover:text-teal-dark transition-colors">
+      <Link href="/surplus" className="mt-4 text-center block text-xs font-mono uppercase tracking-widest text-accent-secondary hover:text-accent-primary transition-colors">
         View All Alerts
       </Link>
     </div>

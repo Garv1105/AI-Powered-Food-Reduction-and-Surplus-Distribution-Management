@@ -65,7 +65,7 @@ function validate(f: PredictDemandRequest): FormErrors {
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
-    <p className="flex items-center gap-1 mt-1 text-xs" style={{ color: '#C2440E' }}>
+    <p className="flex items-center gap-1 mt-1 text-xs" style={{ color: '#E8A33D' }}>
       <AlertCircle size={10} /> {msg}
     </p>
   );
@@ -75,7 +75,7 @@ function DocketLabel({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="block mb-1 text-xs tracking-wide"
-      style={{ color: '#4A5568', fontFamily: "'IBM Plex Sans', sans-serif" }}
+      style={{ color: '#4A5568', fontFamily: "var(--font-sans), sans-serif" }}
     >
       {children}
     </span>
@@ -91,13 +91,13 @@ function DocketInput({
       {...props}
       style={{
         width: '100%',
-        background: '#F4EFE6',
+        background: 'transparent',
         border: '1px solid #E8E0D0',
         borderRadius: '3px',
         padding: '7px 10px',
         fontSize: '13px',
-        fontFamily: "'IBM Plex Mono', monospace",
-        color: '#1C1917',
+        fontFamily: "var(--font-mono), monospace",
+        color: '#F2F0EA',
         outline: 'none',
         ...props.style,
       }}
@@ -115,13 +115,13 @@ function DocketSelect({
       onChange={e => onChange(e.target.value)}
       style={{
         width: '100%',
-        background: '#F4EFE6',
+        background: 'transparent',
         border: '1px solid #E8E0D0',
         borderRadius: '3px',
         padding: '7px 10px',
         fontSize: '13px',
-        fontFamily: "'IBM Plex Mono', monospace",
-        color: '#1C1917',
+        fontFamily: "var(--font-mono), monospace",
+        color: '#F2F0EA',
         outline: 'none',
         cursor: 'pointer',
         appearance: 'none',
@@ -148,9 +148,9 @@ function Toggle({
         background: 'transparent',
         border: 'none',
         cursor: 'pointer',
-        fontFamily: "'IBM Plex Sans', sans-serif",
+        fontFamily: "var(--font-sans), sans-serif",
         fontSize: '13px',
-        color: value === 1 ? '#1C1917' : '#4A5568',
+        color: value === 1 ? '#F2F0EA' : '#4A5568',
       }}
     >
       <span>{label}</span>
@@ -160,7 +160,7 @@ function Toggle({
         width: '36px',
         height: '20px',
         borderRadius: '9999px',
-        background: value === 1 ? '#C2440E' : '#E8E0D0',
+        background: value === 1 ? '#E8A33D' : '#232B38',
         flexShrink: 0,
         transition: 'background 200ms',
         overflow: 'hidden',
@@ -172,7 +172,7 @@ function Toggle({
           width: '16px',
           height: '16px',
           borderRadius: '9999px',
-          background: '#F9F7F4',
+          background: '#1B212B',
           transition: 'left 200ms',
         }} />
       </span>
@@ -189,10 +189,10 @@ function Rule() {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p style={{
-      fontFamily: "'IBM Plex Sans', sans-serif",
+      fontFamily: "var(--font-sans), sans-serif",
       fontSize: '11px',
       letterSpacing: '0.08em',
-      color: '#8B9AAA',
+      color: '#9AA3B2',
       marginBottom: '14px',
       textTransform: 'uppercase',
     }}>
@@ -226,7 +226,7 @@ function pctDelta(predicted: number, baseline: number): string {
 
 function deltaColor(predicted: number, baseline: number): string {
   if (baseline === 0) return '#4A5568';
-  return predicted >= baseline ? '#6BAF8A' : '#C2440E';
+  return predicted >= baseline ? '#6BAF8A' : '#E8A33D';
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -280,10 +280,10 @@ export default function AnumaanPage() {
   }
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: "'IBM Plex Sans', sans-serif",
+    fontFamily: "var(--font-sans), sans-serif",
     minHeight: '100vh',
-    background: '#F4EFE6',
-    color: '#1C1917',
+    background: 'transparent',
+    color: '#F2F0EA',
   };
 
   return (
@@ -296,20 +296,20 @@ export default function AnumaanPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#F9F7F4',
+          background: '#1B212B',
         }}>
           <div>
             <span style={{
-              fontFamily: "'IBM Plex Mono', monospace",
+              fontFamily: "var(--font-mono), monospace",
               fontSize: '18px',
               fontWeight: 600,
-              color: '#1C1917',
+              color: '#F2F0EA',
               letterSpacing: '-0.02em',
             }}>
               Anumaan
             </span>
             <span style={{
-              fontFamily: "'IBM Plex Sans', sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               fontSize: '13px',
               color: '#4A5568',
               marginLeft: '12px',
@@ -321,7 +321,7 @@ export default function AnumaanPage() {
             type="button"
             onClick={() => { setForm(EXAMPLE); setErrors({}); setResult(null); }}
             style={{
-              fontFamily: "'IBM Plex Sans', sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               fontSize: '12px',
               color: '#4A5568',
               background: 'transparent',
@@ -354,7 +354,7 @@ export default function AnumaanPage() {
           >
             {/* Single docket container — like a printed form */}
             <div style={{
-              background: '#F9F7F4',
+              background: '#1B212B',
               border: '1px solid #D5CCBC',
               borderRadius: '4px',
               padding: '28px',
@@ -476,11 +476,11 @@ export default function AnumaanPage() {
                   style={{
                     width: '100%',
                     padding: '11px 0',
-                    background: loading ? '#D5CCBC' : '#C2440E',
-                    color: '#F9F7F4',
+                    background: loading ? '#232B38' : '#E8A33D',
+                    color: '#1B212B',
                     border: 'none',
                     borderRadius: '2px',
-                    fontFamily: "'IBM Plex Sans', sans-serif",
+                    fontFamily: "var(--font-sans), sans-serif",
                     fontWeight: 600,
                     fontSize: '14px',
                     cursor: loading ? 'not-allowed' : 'pointer',
@@ -503,9 +503,9 @@ export default function AnumaanPage() {
                     background: '#FEF2F0',
                     border: '1px solid #F5C6B8',
                     borderRadius: '3px',
-                    color: '#C2440E',
+                    color: '#E8A33D',
                     fontSize: '13px',
-                    fontFamily: "'IBM Plex Sans', sans-serif",
+                    fontFamily: "var(--font-sans), sans-serif",
                     display: 'flex',
                     gap: '8px',
                     alignItems: 'flex-start',
@@ -523,7 +523,7 @@ export default function AnumaanPage() {
             ref={resultRef}
             className="anumaan-kds"
             style={{
-              background: result ? '#1C1917' : '#F4EFE6',
+              background: result ? '#F2F0EA' : '#14181F',
               minHeight: 'calc(100vh - 61px)',
               padding: '40px 32px',
               position: 'sticky',
@@ -539,9 +539,9 @@ export default function AnumaanPage() {
             {!result && !loading && (
               <div style={{ textAlign: 'center' }}>
                 <p style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "var(--font-mono), monospace",
                   fontSize: '13px',
-                  color: '#8B9AAA',
+                  color: '#9AA3B2',
                   lineHeight: 1.6,
                 }}>
                   Fill in the docket<br />and run the model.
@@ -552,11 +552,11 @@ export default function AnumaanPage() {
             {/* Loading state */}
             {loading && (
               <div style={{ textAlign: 'center' }}>
-                <Loader2 size={24} style={{ color: '#C2440E', animation: 'spin 1s linear infinite' }} />
+                <Loader2 size={24} style={{ color: '#E8A33D', animation: 'spin 1s linear infinite' }} />
                 <p style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "var(--font-mono), monospace",
                   fontSize: '12px',
-                  color: '#8B9AAA',
+                  color: '#9AA3B2',
                   marginTop: '12px',
                 }}>
                   reading the model…
@@ -569,9 +569,9 @@ export default function AnumaanPage() {
               <div className="anumaan-result-enter" style={{ width: '100%' }}>
                 {/* Location + date context */}
                 <p style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: "var(--font-mono), monospace",
                   fontSize: '11px',
-                  color: '#8B7355',
+                  color: '#9AA3B2',
                   letterSpacing: '0.08em',
                   marginBottom: '24px',
                 }}>
@@ -581,10 +581,10 @@ export default function AnumaanPage() {
                 {/* The number */}
                 <div style={{ marginBottom: '8px' }}>
                   <span style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontFamily: "var(--font-mono), monospace",
                     fontSize: '80px',
                     fontWeight: 600,
-                    color: '#F4EFE6',
+                    color: '#14181F',
                     lineHeight: 1,
                     letterSpacing: '-0.04em',
                   }}>
@@ -592,9 +592,9 @@ export default function AnumaanPage() {
                   </span>
                 </div>
                 <p style={{
-                  fontFamily: "'IBM Plex Sans', sans-serif",
+                  fontFamily: "var(--font-sans), sans-serif",
                   fontSize: '12px',
-                  color: '#8B7355',
+                  color: '#9AA3B2',
                   marginBottom: '36px',
                 }}>
                   estimated covers
@@ -611,14 +611,14 @@ export default function AnumaanPage() {
                   {/* vs yesterday */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '12px',
-                      color: '#8B7355',
+                      color: '#9AA3B2',
                     }}>
                       vs. yesterday ({form.demandYesterday})
                     </span>
                     <span style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '13px',
                       fontWeight: 500,
                       color: deltaColor(result.predicted_customers, form.demandYesterday),
@@ -630,14 +630,14 @@ export default function AnumaanPage() {
                   {/* vs same day last week */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                     <span style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '12px',
-                      color: '#8B7355',
+                      color: '#9AA3B2',
                     }}>
                       vs. same day last week ({form.demand7DaysAgo})
                     </span>
                     <span style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '13px',
                       fontWeight: 500,
                       color: deltaColor(result.predicted_customers, form.demand7DaysAgo),
@@ -655,18 +655,18 @@ export default function AnumaanPage() {
                     paddingTop: '20px',
                   }}>
                     <p style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '11px',
-                      color: '#8B7355',
+                      color: '#9AA3B2',
                       marginBottom: '4px',
                     }}>
                       recommended production
                     </p>
                     <p style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '28px',
                       fontWeight: 600,
-                      color: '#F4EFE6',
+                      color: '#14181F',
                     }}>
                       {result.recommended_production}
                     </p>
@@ -687,16 +687,16 @@ export default function AnumaanPage() {
                       background: 'transparent',
                       border: 'none',
                       cursor: 'pointer',
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: "var(--font-mono), monospace",
                       fontSize: '11px',
-                      color: '#8B7355',
+                      color: '#9AA3B2',
                       letterSpacing: '0.04em',
                     }}
                   >
                     <span>What Anumaan considered</span>
                     {showDetails
-                      ? <ChevronUp size={13} style={{ color: '#8B7355' }} />
-                      : <ChevronDown size={13} style={{ color: '#8B7355' }} />}
+                      ? <ChevronUp size={13} style={{ color: '#9AA3B2' }} />
+                      : <ChevronDown size={13} style={{ color: '#9AA3B2' }} />}
                   </button>
 
                   {showDetails && (
@@ -710,14 +710,14 @@ export default function AnumaanPage() {
                       {Object.entries(result.derived_features).map(([k, v]) => (
                         <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{
-                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontFamily: "var(--font-mono), monospace",
                             fontSize: '10px',
-                            color: '#5C4F3E',
+                            color: '#F2F0EA',
                           }}>{k}</span>
                           <span style={{
-                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontFamily: "var(--font-mono), monospace",
                             fontSize: '10px',
-                            color: '#8B7355',
+                            color: '#9AA3B2',
                             marginLeft: '8px',
                           }}>
                             {typeof v === 'number' ? v.toFixed(3) : v}

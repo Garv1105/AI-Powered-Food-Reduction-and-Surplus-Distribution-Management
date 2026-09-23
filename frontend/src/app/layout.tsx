@@ -1,26 +1,22 @@
 import './globals.css';
 import Sidebar from '@/components/layout/Sidebar';
+import { Inter, Space_Grotesk } from 'next/font/google';
 import { ReactNode } from 'react';
 
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' });
+
 export const metadata = {
-  title: 'FoodSaver AI',
-  description: 'Food waste reduction platform',
+  title: 'Anna Setu',
+  description: 'AI-Powered Institutional Food Waste Reduction',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="flex w-full min-h-screen bg-slate-50 text-navy">
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans flex w-full min-h-screen bg-ink-base text-content-primary antialiased`}>
         <Sidebar />
-        <main className="ml-64 flex-1 w-full min-h-screen">
+        <main className="ml-64 flex-1 w-full min-h-screen bg-ink-base">
           {children}
         </main>
       </body>
