@@ -1,5 +1,6 @@
 import './globals.css';
 import Sidebar from '@/components/layout/Sidebar';
+import Particles from '@/components/layout/Particles';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { ReactNode } from 'react';
 
@@ -14,9 +15,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans flex w-full min-h-screen bg-ink-base text-content-primary antialiased`}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans flex w-full min-h-screen bg-ink-base text-content-primary antialiased selection:bg-accent-primary/30 selection:text-white relative`}>
+        <Particles />
         <Sidebar />
-        <main className="ml-64 flex-1 w-full min-h-screen bg-ink-base">
+        <main className="ml-[260px] flex-1 w-full min-h-screen relative z-10">
           {children}
         </main>
       </body>

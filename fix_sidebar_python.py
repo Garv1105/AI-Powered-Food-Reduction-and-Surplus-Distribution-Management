@@ -1,12 +1,13 @@
-'use client';
+with open('frontend/src/components/layout/Sidebar.tsx', 'w', encoding='utf-8') as f:
+    f.write('''\'use client\';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit, Factory, Zap } from 'lucide-react';
-import clsx from 'clsx';
-import { motion } from 'framer-motion';
-import { api } from '@/lib/api';
+import Link from \'next/link\';
+import { usePathname } from \'next/navigation\';
+import { useEffect, useState } from \'react\';
+import { LayoutDashboard, AlertTriangle, Map as MapIcon, BarChart2, BrainCircuit, Factory, Zap } from \'lucide-react\';
+import clsx from \'clsx\';
+import { motion } from \'framer-motion\';
+import { api } from \'@/lib/api\';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -17,9 +18,9 @@ export default function Sidebar() {
   useEffect(() => {
     async function ping() {
       try {
-        const res = await fetch('http://127.0.0.1:8080/health', { cache: 'no-store' });
+        const res = await fetch(\'http://127.0.0.1:8080/health\', { cache: \'no-store\' });
         const data = await res.json();
-        setBackendOk(res.ok && data.status === 'ok');
+        setBackendOk(res.ok && data.status === \'ok\');
       } catch {
         setBackendOk(false);
       }
@@ -44,12 +45,12 @@ export default function Sidebar() {
   }, []);
 
   const links = [
-    { href: '/dashboard', label: 'Dashboard',         icon: LayoutDashboard },
-    { href: '/anumaan',   label: 'Anumaan AI',            icon: BrainCircuit    },
-    { href: '/surplus',   label: 'Surplus Events', icon: AlertTriangle, hasAlerts: activeAlerts > 0 },
-    { href: '/map',             label: 'Live Dispatch',      icon: MapIcon         },
-    { href: '/processing-unit', label: 'Processing Unit',     icon: Factory         },
-    { href: '/reports',         label: 'Telemetry',             icon: BarChart2       },
+    { href: \'/dashboard\', label: \'Dashboard\',         icon: LayoutDashboard },
+    { href: \'/anumaan\',   label: \'Anumaan AI\',            icon: BrainCircuit    },
+    { href: \'/surplus\',   label: \'Surplus Events\', icon: AlertTriangle, hasAlerts: activeAlerts > 0 },
+    { href: \'/map\',             label: \'Live Dispatch\',      icon: MapIcon         },
+    { href: \'/processing-unit\', label: \'Processing Unit\',     icon: Factory         },
+    { href: \'/reports\',         label: \'Telemetry\',             icon: BarChart2       },
   ];
 
   return (
@@ -81,10 +82,10 @@ export default function Sidebar() {
               href={link.href}
               onMouseEnter={() => setHoveredPath(link.href)}
               className={clsx(
-                'group flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-display font-bold tracking-wider uppercase transition-colors relative z-10',
+                \'group flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-display font-bold tracking-wider uppercase transition-colors relative z-10\',
                 isActive
-                  ? 'text-accent-primary'
-                  : 'text-content-secondary hover:text-white'
+                  ? \'text-accent-primary\'
+                  : \'text-content-secondary hover:text-white\'
               )}
             >
               {isActive && (
@@ -119,7 +120,7 @@ export default function Sidebar() {
                   initial={{ scale: 0 }} 
                   animate={{ scale: 1 }} 
                   className="w-2 h-2 rounded-full bg-status-critical shadow-[0_0_10px_rgba(217,86,74,1)] animate-pulse" 
-                  title={`${activeAlerts} active alerts`}
+                  title={\\ active alerts\} 
                 />
               )}
             </Link>
@@ -148,13 +149,13 @@ export default function Sidebar() {
             </span>
             <span className={clsx(
               "text-xs font-bold font-mono tracking-wider uppercase mt-0.5",
-              backendOk === null ? 'text-content-secondary' : backendOk ? 'text-status-success' : 'text-status-critical'
+              backendOk === null ? \'text-content-secondary\' : backendOk ? \'text-status-success\' : \'text-status-critical\'
             )}>
-              {backendOk === null ? 'CONNECTING...' : backendOk ? 'SECURE / ONLINE' : 'SYS OFFLINE'}
+              {backendOk === null ? \'CONNECTING...\' : backendOk ? \'SECURE / ONLINE\' : \'SYS OFFLINE\'}
             </span>
           </div>
         </div>
       </div>
     </aside>
   );
-}
+}''')

@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   api,
   ProcessingUnitMetrics,
@@ -28,12 +29,12 @@ function rangeParam(r: Range): string {
 }
 
 function fmt(n: number | null | undefined, decimals = 1, suffix = '') {
-  if (n == null) return 'â€”';
+  if (n == null) return '—';
   return `${n.toFixed(decimals)}${suffix}`;
 }
 function fmtINR(n: number | null | undefined) {
-  if (n == null) return 'â€”';
-  return `â‚¹${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+  if (n == null) return '\u2014';
+  return '\u20B9 ' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 }
 
 function Scorecard({
@@ -42,24 +43,43 @@ function Scorecard({
   sub,
   color,
   icon: Icon,
+  progressPct,
+  statusClass,
 }: {
   label: string;
   value: string;
   sub?: string;
   color: string;
   icon: React.ElementType;
+  progressPct?: number;
+  statusClass?: string;
 }) {
   return (
-    <div className="bg-ink-surface rounded-sm p-5 border border-ink-raised shadow-none">
-      <div className="flex items-center justify-between mb-2">
-        <p className="font-mono text-xs uppercase tracking-widest text-content-secondary">{label}</p>
-        <div className={`p-2 rounded-lg ${color}`}>
-          <Icon size={16} className="text-white" />
+    <motion.div 
+      variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
+      whileHover={{ scale: 1.02 }}
+      className="bg-ink-surface/80 backdrop-blur-md rounded-sm p-5 border border-ink-raised shadow-sm flex flex-col justify-between group overflow-hidden relative"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-content-secondary">{label}</p>
+          <Icon size={16} className="text-content-secondary opacity-50" />
         </div>
+        <p className="text-3xl font-mono font-bold text-accent-secondary tabular-nums tracking-tight">{value}</p>
       </div>
-      <p className="text-3xl font-mono font-bold text-accent-secondary">{value}</p>
-      {sub && <p className="text-xs text-content-secondary mt-1">{sub}</p>}
-    </div>
+      <div className="mt-4">
+        {progressPct !== undefined && (
+          <div className="h-0.5 bg-ink-raised rounded-full overflow-hidden mb-1.5 w-full">
+            <div 
+              className={`h-full transition-all ${statusClass || 'bg-accent-secondary'}`}
+              style={{ width: `${Math.min(100, Math.max(0, progressPct))}%` }}
+            />
+          </div>
+        )}
+        {sub && <p className="text-[10px] font-mono tracking-widest uppercase text-content-secondary">{sub}</p>}
+      </div>
+    </motion.div>
   );
 }
 
@@ -154,7 +174,7 @@ export default function ProcessingUnitPage() {
         <div>
           <h1 className="text-3xl font-display font-bold text-content-primary">Processing Unit Efficiency</h1>
           <p className="text-sm text-content-secondary mt-1">
-            Central Processing Unit â€” Maize/Pulse Line Â· Peenya Industrial Area, Bengaluru
+            Central Processing Unit — Maize/Pulse Line Â· Peenya Industrial Area, Bengaluru
           </p>
         </div>
         <div className="flex gap-2">
@@ -183,12 +203,11 @@ export default function ProcessingUnitPage() {
         <>
           {/* Period info */}
           <p className="text-xs text-content-secondary">
-            Period: {metrics.date_range.start} â†’ {metrics.date_range.end} Â· {metrics.days_with_data} days
-            with data
+            Period: {metrics.date_range.start} â†’ {metrics.date_range.end} Â· {metrics.days_with_data} days with data
           </p>
 
           {/* Scorecards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ staggerChildren: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Scorecard
               label="Avg Process Yield"
               value={fmt(agg?.avg_process_yield_pct, 1, '%')}
@@ -215,8 +234,10 @@ export default function ProcessingUnitPage() {
               label="Energy Intensity"
               value={fmt(agg?.period_energy_intensity_kwh_per_kg, 3, ' kWh/kg')}
               sub="SUM(kWh) / SUM(good output)"
-              color="bg-blue-500"
+              color=""
               icon={Zap}
+              progressPct={50}
+              statusClass="bg-accent-secondary"
             />
             <Scorecard
               label="Avg Rejection Rate"
@@ -229,10 +250,10 @@ export default function ProcessingUnitPage() {
               }
               icon={AlertTriangle}
             />
-          </div>
+            </motion.div>
 
           {/* Sum metrics row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ staggerChildren: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: 'Net Good Output', value: fmt(agg?.total_net_good_output_kg, 0, ' kg') },
               { label: 'Total Rejected', value: fmt(agg?.total_rejected_kg, 0, ' kg') },
@@ -244,7 +265,7 @@ export default function ProcessingUnitPage() {
                 <p className="text-lg font-bold text-content-primary mt-1">{value}</p>
               </div>
             ))}
-          </div>
+          </motion.div>
 
           {/* Trend charts */}
           {metrics.trend.length > 0 && (
@@ -297,7 +318,7 @@ export default function ProcessingUnitPage() {
                   Yield &lt; 82% Â· Downtime &gt; 15% Â· Rejection &gt; 3%
                 </p>
               </div>
-              <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+              <div className="divide-y divide-ink-raised max-h-72 overflow-y-auto">
                 {flagged.flagged_days.slice(0, 20).map((fd) => (
                   <div key={fd.date} className="px-5 py-3 hover:bg-ink-raised transition-colors">
                     <div className="flex items-center justify-between">
@@ -306,10 +327,10 @@ export default function ProcessingUnitPage() {
                           {fd.date}
                         </span>
                         <span className="ml-2 text-xs text-content-secondary">{fd.day_of_week}</span>
-                        <span className="ml-2 text-xs text-amber-600 font-medium">{fd.root_cause}</span>
+                        <span className="ml-2 text-xs text-status-warning font-medium">{fd.root_cause}</span>
                       </div>
-                      <span className={`text-xs font-medium ${(fd.daily_profit_inr ?? 0) >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                        â‚¹{Math.abs(fd.daily_profit_inr ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })} {(fd.daily_profit_inr ?? 0) >= 0 ? 'profit' : 'loss'}
+                      <span className={`text-xs font-medium ${(fd.daily_profit_inr ?? 0) >= 0 ? "text-status-success" : "text-status-critical"}`}>
+                        {'\u20B9'}{Math.abs(fd.daily_profit_inr ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })} {(fd.daily_profit_inr ?? 0) >= 0 ? 'profit' : 'loss'}
                       </span>
                     </div>
                     <div className="flex gap-2 mt-1 flex-wrap">

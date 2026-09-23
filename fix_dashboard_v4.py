@@ -1,4 +1,7 @@
-'use client';
+import re
+
+with open('frontend/src/app/dashboard/page.tsx', 'w', encoding='utf-8') as f:
+    f.write(''''use client';
 
 import { useEffect, useState } from 'react';
 import { api, DashboardSummary, ForecastResponse } from '@/lib/api';
@@ -13,7 +16,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [forecast, setForecast] = useState<ForecastResponse | null>(null);
-  const [productionPlan, setProductionPlan] = useState<any | null>(null);
+  const [productionPlan, setProductionPlan] = useState<any[]>([]);
   const [surplusEvents, setSurplusEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -140,12 +143,12 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {productionPlan?.categories?.map((cat: any) => (
-                    <tr key={cat.category_id} className="hover:bg-white/5 transition-colors">
-                      <td className="px-5 py-4 font-medium text-content-primary capitalize">{cat.category_name}</td>
-                      <td className="px-5 py-4 text-content-secondary">{cat.predicted_qty} {cat.unit}</td>
+                  {productionPlan.map((cat) => (
+                    <tr key={cat.category} className="hover:bg-white/5 transition-colors">
+                      <td className="px-5 py-4 font-medium text-content-primary">{cat.category}</td>
+                      <td className="px-5 py-4 text-content-secondary">{cat.forecast_qty} {cat.unit}</td>
                       <td className="px-5 py-4 text-content-secondary">
-                        <span className="bg-black/30 px-2 py-1 rounded-md border border-white/5" title={cat.buffer_reasoning}>
+                        <span className="bg-black/30 px-2 py-1 rounded-md border border-white/5">
                           {(cat.buffer_pct * 100).toFixed(1)}%
                         </span>
                       </td>
@@ -168,3 +171,5 @@ export default function DashboardPage() {
     </motion.div>
   );
 }
+''')
+print('Dashboard v4 generated successfully')

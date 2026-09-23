@@ -3,6 +3,7 @@
 import { NGOMatch, SurplusEvent } from '@/lib/api';
 import { CheckCircle2, XCircle, MapPin, Scale, Clock } from 'lucide-react';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 
 interface NGOMatchListProps {
   matches: NGOMatch[];

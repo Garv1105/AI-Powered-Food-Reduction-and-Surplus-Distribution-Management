@@ -5,11 +5,12 @@ import dynamic from 'next/dynamic';
 import { api, RouteResponse, NGOMatch } from '@/lib/api';
 import { Navigation2, Clock, MapPin } from 'lucide-react';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 
 const RouteMap = dynamic(() => import('@/components/map/RouteMap'), { 
   ssr: false, 
   loading: () => (
-    <div className="w-full h-full bg-slate-100 animate-pulse flex items-center justify-center text-slate-500">
+    <div className="w-full h-full bg-ink-base animate-pulse flex items-center justify-center text-content-secondary">
       Loading map...
     </div>
   )
@@ -64,14 +65,19 @@ export default function MapPage() {
   };
 
   if (loading) {
-    return <div className="p-8">Loading map data...</div>;
+    return (
+      <div className="p-8 flex items-center gap-3 text-content-secondary font-mono text-sm uppercase tracking-widest">
+        <div className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
+        Loading map data...
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">
-          {error}
+        <div className="bg-status-critical/10 text-status-critical p-4 rounded-sm border border-status-critical/20 font-mono text-sm uppercase tracking-widest">
+          ERROR: {error}
         </div>
       </div>
     );
@@ -136,7 +142,7 @@ export default function MapPage() {
               {route.waypoints.map((wp, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span className={clsx("px-2 py-0.5 rounded-sm text-[10px] tracking-widest uppercase", wp.type === 'kitchen' ? 'bg-ink-raised text-content-primary border border-ink-raised' : 'bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20')}>
-                    {wp.name}
+                    {wp.label}
                   </span>
                   {i < route.waypoints.length - 1 && <span className="text-ink-raised">&rarr;</span>}
                 </div>
@@ -152,13 +158,22 @@ export default function MapPage() {
         <RouteMap route={route} ngos={ngos} />
         
         {/* Overlay Sidebar */}
-        <div className="absolute top-4 right-4 w-80 max-h-[calc(100%-32px)] bg-ink-surface rounded-sm border border-ink-raised flex flex-col overflow-hidden z-10 shadow-[0_8px_30px_rgb(0,0,0,0.5)]">
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
+          className="absolute top-4 right-4 w-80 max-h-[calc(100%-32px)] bg-ink-surface/80 backdrop-blur-xl rounded-sm border border-ink-raised flex flex-col overflow-hidden z-10 shadow-[0_8px_30px_rgb(0,0,0,0.5)]"
+        >
           <div className="p-4 border-b border-ink-raised bg-ink-surface">
-            <h3 className="font-display font-bold uppercase tracking-widest text-sm text-content-primary">Nearby NGOs</h3>
+            <h3 className="font-display font-bold uppercase tracking-widest text-sm text-content-primary">NGO Dispatch Queue</h3>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
-            {ngos.map(ngo => (
-              <div key={ngo.ngo_id} className="p-3 border-b border-ink-raised last:border-0 hover:bg-ink-raised transition-colors">
+            {ngos.map((ngo, index) => (
+              <div key={ngo.ngo_id} className={`p-3 border-b border-ink-raised last:border-0 transition-colors ${index === 0 ? 'bg-ink-raised/50 border-l-2 border-l-accent-secondary' : 'hover:bg-ink-raised'}`}>
+                {index === 0 && (
+                  <div className="mb-2 inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-widest text-accent-secondary bg-accent-secondary/10 px-1.5 py-0.5 rounded-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-secondary animate-pulse" />
+                    Optimal Match
+                  </div>
+                )}
                 <h4 className="font-display font-bold text-sm text-content-primary uppercase tracking-wide">{ngo.ngo_name}</h4>
                 <div className="flex justify-between items-center mt-2">
                   <p className="text-[10px] font-mono text-content-secondary uppercase tracking-widest truncate max-w-[180px]">{ngo.match_reason}</p>
@@ -169,7 +184,7 @@ export default function MapPage() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

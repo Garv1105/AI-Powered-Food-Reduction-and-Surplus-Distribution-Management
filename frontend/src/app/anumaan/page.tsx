@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { api, PredictDemandRequest, PredictDemandResponse } from '@/lib/api';
 import { Loader2, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Fonts (loaded via CSS @import in globals or inline style) ───────────────
 // IBM Plex Mono + IBM Plex Sans via Google Fonts — added to <head> below
@@ -65,7 +66,7 @@ function validate(f: PredictDemandRequest): FormErrors {
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
-    <p className="flex items-center gap-1 mt-1 text-xs" style={{ color: '#E8A33D' }}>
+    <p className="flex items-center gap-1 mt-1 text-xs" style={{ color: '#E8A33D', textShadow: '0 0 10px rgba(232,163,61,0.5)' }}>
       <AlertCircle size={10} /> {msg}
     </p>
   );
@@ -75,7 +76,7 @@ function DocketLabel({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="block mb-1 text-xs tracking-wide"
-      style={{ color: '#4A5568', fontFamily: "var(--font-sans), sans-serif" }}
+      style={{ color: '#9AA3B2', fontFamily: "var(--font-sans), sans-serif" }}
     >
       {children}
     </span>
@@ -91,8 +92,8 @@ function DocketInput({
       {...props}
       style={{
         width: '100%',
-        background: 'transparent',
-        border: '1px solid #E8E0D0',
+        background: '#232B38',
+        border: '1px solid #3A4255',
         borderRadius: '3px',
         padding: '7px 10px',
         fontSize: '13px',
@@ -115,8 +116,8 @@ function DocketSelect({
       onChange={e => onChange(e.target.value)}
       style={{
         width: '100%',
-        background: 'transparent',
-        border: '1px solid #E8E0D0',
+        background: '#232B38',
+        border: '1px solid #3A4255',
         borderRadius: '3px',
         padding: '7px 10px',
         fontSize: '13px',
@@ -145,12 +146,12 @@ function Toggle({
         justifyContent: 'space-between',
         width: '100%',
         padding: '8px 0',
-        background: 'transparent',
+        background: '#14181F',
         border: 'none',
         cursor: 'pointer',
         fontFamily: "var(--font-sans), sans-serif",
         fontSize: '13px',
-        color: value === 1 ? '#F2F0EA' : '#4A5568',
+        color: value === 1 ? '#F2F0EA' : '#9AA3B2',
       }}
     >
       <span>{label}</span>
@@ -172,7 +173,7 @@ function Toggle({
           width: '16px',
           height: '16px',
           borderRadius: '9999px',
-          background: '#1B212B',
+          background: 'rgba(27, 33, 43, 0.4)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
           transition: 'left 200ms',
         }} />
       </span>
@@ -225,7 +226,7 @@ function pctDelta(predicted: number, baseline: number): string {
 }
 
 function deltaColor(predicted: number, baseline: number): string {
-  if (baseline === 0) return '#4A5568';
+  if (baseline === 0) return '#9AA3B2';
   return predicted >= baseline ? '#6BAF8A' : '#E8A33D';
 }
 
@@ -282,7 +283,7 @@ export default function AnumaanPage() {
   const inputStyle: React.CSSProperties = {
     fontFamily: "var(--font-sans), sans-serif",
     minHeight: '100vh',
-    background: 'transparent',
+    background: '#14181F',
     color: '#F2F0EA',
   };
 
@@ -296,7 +297,7 @@ export default function AnumaanPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#1B212B',
+          background: 'rgba(27, 33, 43, 0.4)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
         }}>
           <div>
             <span style={{
@@ -311,7 +312,7 @@ export default function AnumaanPage() {
             <span style={{
               fontFamily: "var(--font-sans), sans-serif",
               fontSize: '13px',
-              color: '#4A5568',
+              color: '#9AA3B2',
               marginLeft: '12px',
             }}>
               demand forecast
@@ -323,8 +324,8 @@ export default function AnumaanPage() {
             style={{
               fontFamily: "var(--font-sans), sans-serif",
               fontSize: '12px',
-              color: '#4A5568',
-              background: 'transparent',
+              color: '#9AA3B2',
+              background: '#14181F',
               border: '1px solid #E8E0D0',
               borderRadius: '2px',
               padding: '5px 12px',
@@ -354,9 +355,8 @@ export default function AnumaanPage() {
           >
             {/* Single docket container — like a printed form */}
             <div style={{
-              background: '#1B212B',
-              border: '1px solid #D5CCBC',
-              borderRadius: '4px',
+              background: 'rgba(27, 33, 43, 0.4)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+              borderRadius: '24px',
               padding: '28px',
               maxWidth: '640px',
             }}>
@@ -469,32 +469,26 @@ export default function AnumaanPage() {
 
               {/* Submit */}
               <div style={{ marginTop: '28px' }}>
-                <button
+                <motion.button
                   id="anumaan-submit"
                   type="submit"
                   disabled={loading}
-                  style={{
-                    width: '100%',
-                    padding: '11px 0',
-                    background: loading ? '#232B38' : '#E8A33D',
-                    color: '#1B212B',
-                    border: 'none',
-                    borderRadius: '2px',
-                    fontFamily: "var(--font-sans), sans-serif",
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    letterSpacing: '0.01em',
-                  }}
+                  whileHover={!loading ? { scale: 1.01 } : {}}
+                  whileTap={!loading ? { scale: 0.98 } : {}}
+                  className={clsx(
+                    "relative w-full py-5 text-[15px] font-display font-bold tracking-wide uppercase transition-all rounded-2xl overflow-hidden",
+                    loading 
+                      ? "bg-ink-raised text-content-secondary" 
+                      : "bg-accent-primary text-ink-base glow-button-primary"
+                  )}
                 >
-                  {loading
-                    ? <><Loader2 size={15} className="animate-spin" /> Running model…</>
-                    : 'Run Anumaan'}
-                </button>
+                  {!loading && <div className="absolute inset-0 bg-white/20 -translate-x-full hover:animate-[shimmer_1s_infinite] skew-x-12" />}
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {loading
+                      ? <><Loader2 size={15} className="animate-spin" /> Running model…</>
+                      : 'Run Anumaan'}
+                  </span>
+                </motion.button>
 
                 {apiError && (
                   <div style={{
@@ -503,7 +497,7 @@ export default function AnumaanPage() {
                     background: '#FEF2F0',
                     border: '1px solid #F5C6B8',
                     borderRadius: '3px',
-                    color: '#E8A33D',
+                    color: '#E8A33D', textShadow: '0 0 10px rgba(232,163,61,0.5)',
                     fontSize: '13px',
                     fontFamily: "var(--font-sans), sans-serif",
                     display: 'flex',
@@ -523,7 +517,7 @@ export default function AnumaanPage() {
             ref={resultRef}
             className="anumaan-kds"
             style={{
-              background: result ? '#F2F0EA' : '#14181F',
+              background: 'transparent',
               minHeight: 'calc(100vh - 61px)',
               padding: '40px 32px',
               position: 'sticky',
@@ -552,7 +546,7 @@ export default function AnumaanPage() {
             {/* Loading state */}
             {loading && (
               <div style={{ textAlign: 'center' }}>
-                <Loader2 size={24} style={{ color: '#E8A33D', animation: 'spin 1s linear infinite' }} />
+                <Loader2 size={24} style={{ color: '#E8A33D', textShadow: '0 0 10px rgba(232,163,61,0.5)', animation: 'spin 1s linear infinite' }} />
                 <p style={{
                   fontFamily: "var(--font-mono), monospace",
                   fontSize: '12px',
@@ -582,9 +576,9 @@ export default function AnumaanPage() {
                 <div style={{ marginBottom: '8px' }}>
                   <span style={{
                     fontFamily: "var(--font-mono), monospace",
-                    fontSize: '80px',
+                    fontSize: '96px', textShadow: '0 0 30px rgba(255,255,255,0.3)',
                     fontWeight: 600,
-                    color: '#14181F',
+                    color: '#F2F0EA',
                     lineHeight: 1,
                     letterSpacing: '-0.04em',
                   }}>
@@ -666,7 +660,7 @@ export default function AnumaanPage() {
                       fontFamily: "var(--font-mono), monospace",
                       fontSize: '28px',
                       fontWeight: 600,
-                      color: '#14181F',
+                      color: '#F2F0EA',
                     }}>
                       {result.recommended_production}
                     </p>
@@ -684,7 +678,7 @@ export default function AnumaanPage() {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '16px 0',
-                      background: 'transparent',
+                      background: '#14181F',
                       border: 'none',
                       cursor: 'pointer',
                       fontFamily: "var(--font-mono), monospace",

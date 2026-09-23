@@ -1,9 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { BarChart2, Cloud, Users, CheckCircle, Leaf, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('30d');
@@ -43,19 +44,19 @@ export default function ReportsPage() {
           </p>
         </div>
         <div className="flex gap-4 items-center">
-          <label className="flex items-center gap-2 cursor-pointer bg-ink-raised px-3 py-1.5 rounded-lg border border-ink-raised">
+          <label className="flex items-center gap-2 cursor-pointer bg-ink-surface px-3 py-1.5 rounded-sm border border-ink-raised hover:bg-ink-raised transition-colors">
             <input 
               type="checkbox" 
               checked={demoMode} 
               onChange={e => setDemoMode(e.target.checked)} 
-              className="rounded text-accent-secondary focus:ring-teal"
+              className="rounded text-accent-secondary focus:ring-accent-secondary bg-ink-base border-ink-raised"
             />
-            <span className="text-sm font-medium text-content-primary">Presentation Mode</span>
+            <span className="text-xs font-mono uppercase tracking-widest text-content-secondary">Presentation Mode</span>
           </label>
           <select 
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="border-ink-raised rounded-lg text-sm bg-ink-surface"
+            className="border-ink-raised rounded-sm text-xs font-mono uppercase tracking-widest bg-ink-surface text-content-primary focus:border-accent-primary focus:outline-none px-3 py-1.5"
           >
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
@@ -121,7 +122,7 @@ export default function ReportsPage() {
             <div className="p-5 border-b border-ink-raised flex justify-between items-center bg-ink-base/50">
               <h2 className="font-display font-bold uppercase tracking-wide text-content-primary">Executive Summary</h2>
               <span className={clsx("text-xs font-semibold px-2 py-1 rounded border", 
-                report.narrative_source === 'gemini' ? 'bg-accent-secondary/10 text-accent-secondary border-accent-secondary/20 font-mono tracking-widest' : 'bg-ink-raised text-slate-600 border-ink-raised'
+                report.narrative_source === 'gemini' ? 'bg-accent-secondary/10 text-accent-secondary border-accent-secondary/20 font-mono tracking-widest' : 'bg-ink-raised text-content-secondary font-mono tracking-widest uppercase border-ink-raised'
               )}>
                 Source: {report.narrative_source}
               </span>
